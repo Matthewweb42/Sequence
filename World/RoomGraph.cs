@@ -124,6 +124,9 @@ public partial class RoomGraph : Node
     /// <summary>Next auto-incremented room ID.</summary>
     private int _nextRoomId;
 
+    /// <summary>Room ID of the starting room (root of reachability queries).</summary>
+    private int _startRoomId;
+
     // ═══════════════════════════════════════════
     //  Godot Lifecycle
     // ═══════════════════════════════════════════
@@ -311,7 +314,12 @@ public partial class RoomGraph : Node
     /// <returns>List of adjacent RoomNodes.</returns>
     public List<RoomNode> GetAdjacentRooms(int roomId)
     {
-        throw new System.NotImplementedException();
+        if (!_rooms.TryGetValue(roomId, out RoomNode room))
+        {
+            return new List<RoomNode>();
+        }
+
+        return new List<RoomNode>(room.Neighbours.Keys);
     }
 
     /// <summary>
@@ -323,7 +331,19 @@ public partial class RoomGraph : Node
     /// <returns>DoorInfo if a gated door exists; otherwise null.</returns>
     public DoorInfo GetDoorBetween(int roomIdA, int roomIdB)
     {
-        throw new System.NotImplementedException();
+        if (!_rooms.TryGetValue(roomIdA, out RoomNode roomA))
+        {
+            return null;
+        }
+
+        if (!_rooms.TryGetValue(roomIdB, out RoomNode roomB))
+        {
+            return null;
+        }
+
+        // Check if roomB is a neighbour of roomA and return the door (may be null for open connections)
+        roomA.Neighbours.TryGetValue(roomB, out DoorInfo door);
+        return door;
     }
 
     /// <summary>
@@ -336,7 +356,49 @@ public partial class RoomGraph : Node
     /// <returns>True if a valid path exists.</returns>
     public bool IsRoomReachable(int roomId, int playerSequence)
     {
-        throw new System.NotImplementedException();
+        if (!_rooms.ContainsKey(roomId) || !_rooms.ContainsKey(_startRoomId))
+        {
+            return false;
+        }
+
+        // BFS from the start room, only traversing edges whose doors are
+        // either absent (open connection) or unlocked at the player's current Sequence.
+        var visited = new HashSet<int>();
+        var queue = new Queue<int>();
+
+        visited.Add(_startRoomId);
+        queue.Enqueue(_startRoomId);
+
+        while (queue.Count > 0)
+        {
+            int currentId = queue.Dequeue();
+            if (currentId == roomId)
+            {
+                return true;
+            }
+
+            RoomNode current = _rooms[currentId];
+            foreach (var (neighbour, door) in current.Neighbours)
+            {
+                if (visited.Contains(neighbour.RoomId))
+                {
+                    continue;
+                }
+
+                // A null door means an open (ungated) connection.
+                // A locked door is passable only if the player's Sequence
+                // is at or beyond the required level (lower number = more advanced).
+                if (door != null && door.IsLocked && playerSequence > door.RequiredSequence)
+                {
+                    continue;
+                }
+
+                visited.Add(neighbour.RoomId);
+                queue.Enqueue(neighbour.RoomId);
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -346,7 +408,8 @@ public partial class RoomGraph : Node
     /// <returns>The matching RoomNode, or null if not found.</returns>
     public RoomNode GetRoom(int roomId)
     {
-        throw new System.NotImplementedException();
+        _rooms.TryGetValue(roomId, out RoomNode room);
+        return room;
     }
 
     /// <summary>
@@ -356,7 +419,15 @@ public partial class RoomGraph : Node
     /// <returns>List of RoomNodes on that branch.</returns>
     public List<RoomNode> GetRoomsByBranch(int branchId)
     {
-        throw new System.NotImplementedException();
+        var result = new List<RoomNode>();
+        foreach (RoomNode room in _rooms.Values)
+        {
+            if (room.BranchId == branchId)
+            {
+                result.Add(room);
+            }
+        }
+        return result;
     }
 
     // ═══════════════════════════════════════════
@@ -370,6 +441,24 @@ public partial class RoomGraph : Node
     /// <param name="newSequence">The player's new (lower) Sequence number.</param>
     private void OnSequenceAdvanced(int newSequence)
     {
-        throw new System.NotImplementedException();
+        // Iterate every room and every door; unlock any door whose
+        // RequiredSequence the player now satisfies.
+        // Lower Sequence number = more advanced, so unlock when
+        // newSequence <= door.RequiredSequence.
+        foreach (RoomNode room in _rooms.Values)
+        {
+            foreach (DoorInfo door in room.Neighbours.Values)
+            {
+                if (door == null || !door.IsLocked)
+                {
+                    continue;
+                }
+
+                if (newSequence <= door.RequiredSequence)
+                {
+                    door.IsLocked = false;
+                }
+            }
+        }
     }
 }
