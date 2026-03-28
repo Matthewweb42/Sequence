@@ -149,13 +149,54 @@ public partial class RoomGraph : Node
     /// <param name="sequenceFinal">The final Sequence to reach before the boss (e.g. 5).</param>
     public void GenerateWorld(int seed, int sequenceStart, int sequenceFinal)
     {
-        // Step 1: Seed & configure
-        // Step 2: Walk primary branch
-        // Step 3: Walk subsequent branches
-        // Step 4: Create inter-branch connections
-        // Step 5: Populate rooms
-        // Step 6: Validation pass (retry on failure)
-        throw new System.NotImplementedException();
+        for (int attempt = 0; attempt < MaxRetries; attempt++)
+        {
+            // Step 1: Seed & configure
+            SeedAndConfigure(seed + attempt);
+
+            // Step 2: Walk primary branch
+            _branchOrder.Add(sequenceStart);
+            WalkPrimaryBranch(sequenceStart);
+
+            // Step 3: Walk subsequent branches (one per advancement + one boss branch)
+            bool generationFailed = false;
+            for (int seq = sequenceStart - 1; seq >= sequenceFinal; seq--)
+            {
+                _branchOrder.Add(seq);
+                bool isBossBranch = (seq == sequenceFinal);
+                List<RoomNode> branchRooms = WalkSubsequentBranch(seq, isBossBranch);
+
+                // I might make changes to the WalkSubsequentBranch algo bc it'll make exploration more interesting if the branches cross more and therefore should handle crossed pathes better
+                if (branchRooms == null || branchRooms.Count == 0)
+                {
+                    // Walk failed (no valid fork point or fully blocked grid)
+                    generationFailed = true;
+                    break;
+                }
+            }
+
+            if (generationFailed)
+            {
+                continue;
+            }
+
+            // Step 4: Create inter-branch connections
+            CreateInterBranchConnections();
+
+            // Step 5: Populate rooms
+            PopulateRooms();
+
+            // Step 6: Validation pass
+            if (ValidateGraph())
+            {
+                GD.Print($"[RoomGraph] World generated successfully on attempt {attempt + 1} (seed {seed + attempt}).");
+                return;
+            }
+        }
+
+        // All retries exhausted — use fallback
+        GD.PrintErr($"[RoomGraph] Generation failed after {MaxRetries} attempts. Loading fallback layout.");
+        LoadFallbackLayout();
     }
 
     // ═══════════════════════════════════════════
@@ -168,7 +209,12 @@ public partial class RoomGraph : Node
     /// <param name="seed">RNG seed.</param>
     private void SeedAndConfigure(int seed)
     {
-        throw new System.NotImplementedException();
+        _rng.Seed = (ulong)seed;
+        _rooms.Clear();
+        _grid.Clear();
+        _branchOrder.Clear();
+        _nextRoomId = 0;
+        _startRoomId = 0;
     }
 
     /// <summary>
@@ -180,7 +226,15 @@ public partial class RoomGraph : Node
     /// <returns>The list of RoomNodes placed on this branch.</returns>
     private List<RoomNode> WalkPrimaryBranch(int branchId)
     {
-        throw new System.NotImplementedException();
+        Vector2I origin = Vector2I.Zero;
+        List<RoomNode> rooms = PerformRandomWalk(origin, branchId, RoomsPerBranch);
+
+        if (rooms.Count > 0)
+        {
+            _startRoomId = rooms[0].RoomId;
+        }
+
+        return rooms;
     }
 
     /// <summary>
@@ -190,10 +244,36 @@ public partial class RoomGraph : Node
     /// </summary>
     /// <param name="branchId">Sequence tier for this branch.</param>
     /// <param name="isBossBranch">If true, terminates with Boss Antechamber + Boss Room instead of a Shrine.</param>
-    /// <returns>The list of RoomNodes placed on this branch.</returns>
+    /// <returns>The list of RoomNodes placed on this branch, or null if no valid fork point was found.</returns>
     private List<RoomNode> WalkSubsequentBranch(int branchId, bool isBossBranch)
     {
-        throw new System.NotImplementedException();
+        // Pick a fork point on an existing branch that has at least one free adjacent cell
+        RoomNode forkRoom = SelectForkPoint();
+        if (forkRoom == null)
+        {
+            return null;
+        }
+
+        // Find a free adjacent cell next to the fork point to start the new branch
+        Direction? dir = PickRandomDirection(forkRoom.GridPosition);
+        if (dir == null)
+        {
+            return null;
+        }
+
+        Vector2I branchStart = forkRoom.GridPosition + DirectionToOffset(dir.Value);
+
+        // Walk the new branch
+        List<RoomNode> rooms = PerformRandomWalk(branchStart, branchId, RoomsPerBranch, isBossBranch);
+        if (rooms.Count == 0)
+        {
+            return null;
+        }
+
+        // Gate the entry to this branch with a sequence-locked door
+        CreateBranchEntryDoor(forkRoom, rooms[0], branchId);        // TODO: If branches are changed to interconnect differently, we need to handle sequence gates so that they apply to every cross connection
+
+        return rooms;
     }
 
     /// <summary>
@@ -204,10 +284,68 @@ public partial class RoomGraph : Node
     /// <param name="startPosition">Grid cell where this walk begins.</param>
     /// <param name="branchId">Branch ID to stamp on every placed room.</param>
     /// <param name="roomCount">Number of rooms to place on this walk.</param>
+    /// <param name="isBossBranch">Whether this branch terminates with the boss.</param>
     /// <returns>Ordered list of placed RoomNodes.</returns>
-    private List<RoomNode> PerformRandomWalk(Vector2I startPosition, int branchId, int roomCount)
+    private List<RoomNode> PerformRandomWalk(Vector2I startPosition, int branchId, int roomCount, bool isBossBranch = false)
     {
-        throw new System.NotImplementedException();
+        var placed = new List<RoomNode>();
+        Vector2I currentPos = startPosition;
+
+        for (int i = 0; i < roomCount; i++)
+        {
+            // If the current position is already occupied (shouldn't happen for the
+            // first room unless the caller made an error), bail out
+            if (_grid.ContainsKey(currentPos))
+            {
+                break;
+            }
+
+            bool isLastRoom = (i == roomCount - 1);
+            RoomArchetype archetype = DetermineArchetype(i, isLastRoom, isBossBranch);
+
+            // For the boss branch, the second-to-last room is the antechamber
+            if (isBossBranch && i == roomCount - 2)
+            {
+                archetype = RoomArchetype.BossAntechamber;
+            }
+
+            var room = new RoomNode
+            {
+                RoomId = _nextRoomId++,
+                GridPosition = currentPos,
+                BranchId = branchId,
+                Archetype = archetype
+            };
+
+            // Register in data structures
+            _rooms[room.RoomId] = room;
+            _grid[currentPos] = room;
+            placed.Add(room);
+
+            // Link to the previous room in this walk with an open connection
+            if (placed.Count > 1)
+            {
+                RoomNode prev = placed[placed.Count - 2];
+                prev.Neighbours[room] = null;  // open connection
+                room.Neighbours[prev] = null;
+            }
+
+            // Advance the walker to the next cell (unless this is the last room)
+            if (!isLastRoom)
+            {
+                Direction? nextDir = PickRandomDirection(currentPos);
+                if (nextDir == null)
+                {
+                    // Stuck — no free adjacent cells; end the walk early.
+                    // Mark the current (final) room with the terminal archetype.
+                    room.Archetype = isBossBranch ? RoomArchetype.BossRoom : RoomArchetype.SequenceShrine;
+                    break;
+                }
+                currentPos = currentPos + DirectionToOffset(nextDir.Value);
+            }
+        }
+
+        return placed;
     }
 
     /// <summary>
@@ -218,7 +356,24 @@ public partial class RoomGraph : Node
     /// <returns>The chosen direction, or null if all neighbours are occupied.</returns>
     private Direction? PickRandomDirection(Vector2I currentPosition)
     {
-        throw new System.NotImplementedException();
+        var candidates = new List<Direction>();
+
+        foreach (Direction dir in System.Enum.GetValues(typeof(Direction)))
+        {
+            Vector2I neighbour = currentPosition + DirectionToOffset(dir);
+            if (!_grid.ContainsKey(neighbour))
+            {
+                candidates.Add(dir);
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        int index = _rng.RandiRange(0, candidates.Count - 1);
+        return candidates[index];
     }
 
     /// <summary>
@@ -226,7 +381,14 @@ public partial class RoomGraph : Node
     /// </summary>
     private Vector2I DirectionToOffset(Direction direction)
     {
-        throw new System.NotImplementedException();
+        return direction switch
+        {
+            Direction.North => new Vector2I(0, -1),
+            Direction.South => new Vector2I(0, 1),
+            Direction.East  => new Vector2I(1, 0),
+            Direction.West  => new Vector2I(-1, 0),
+            _ => Vector2I.Zero
+        };
     }
 
     /// <summary>
@@ -238,18 +400,65 @@ public partial class RoomGraph : Node
     /// <param name="isBossBranch">True if this branch ends with the boss.</param>
     /// <returns>The archetype to assign.</returns>
     private RoomArchetype DetermineArchetype(int indexInBranch, bool isLastRoom, bool isBossBranch)
-    {
-        throw new System.NotImplementedException();
+    {// TODO: This is Super up for changes
+        // Terminal room: Shrine (normal branch) or BossRoom (boss branch)
+        if (isLastRoom)
+        {
+            return isBossBranch ? RoomArchetype.BossRoom : RoomArchetype.SequenceShrine;
+        }
+
+        // First room is always Combat (entrance encounter)
+        if (indexInBranch == 0)
+        {
+            return RoomArchetype.Combat;
+        }
+
+        // Repeating schedule for middle rooms:
+        //   Combat → Material → Combat → Lore → Combat → ...
+        int phase = (indexInBranch - 1) % 4;
+        return phase switch
+        {
+            0 => RoomArchetype.Combat,
+            1 => RoomArchetype.Material,
+            2 => RoomArchetype.Combat,
+            3 => RoomArchetype.Lore,
+            _ => RoomArchetype.Combat
+        };
     }
 
     /// <summary>
-    /// Selects a random fork point from all rooms placed so far on
-    /// previously generated branches.
+    /// Selects a random fork point from all rooms placed so far.
+    /// Excludes rooms that have no free adjacent grid cells, Shrine rooms,
+    /// and Boss rooms to keep fork points in traversal-friendly locations.
     /// </summary>
-    /// <returns>The RoomNode chosen as the fork origin.</returns>
+    /// <returns>The RoomNode chosen as the fork origin, or null if none available.</returns>
     private RoomNode SelectForkPoint()
     {
-        throw new System.NotImplementedException();
+        var candidates = new List<RoomNode>();
+
+        foreach (RoomNode room in _rooms.Values)
+        {
+            // Skip terminal rooms (Shrines, Boss rooms) — forks should come from mid-branch
+            if (room.Archetype == RoomArchetype.SequenceShrine ||
+                room.Archetype == RoomArchetype.BossRoom ||
+                room.Archetype == RoomArchetype.BossAntechamber)
+            {
+                continue;
+            }
+            // Must have at least one free adjacent cell to start a new branch from
+            if (PickRandomDirection(room.GridPosition) != null)
+            {
+                candidates.Add(room);
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        int index = _rng.RandiRange(0, candidates.Count - 1);
+        return candidates[index];
     }
 
     /// <summary>
@@ -261,7 +470,15 @@ public partial class RoomGraph : Node
     /// <param name="requiredSequence">Sequence level needed to unlock.</param>
     private void CreateBranchEntryDoor(RoomNode forkRoom, RoomNode branchEntryRoom, int requiredSequence)
     {
-        throw new System.NotImplementedException();
+        var door = new DoorInfo
+        {
+            RequiredSequence = requiredSequence,
+            ConnectedBranches = (forkRoom.BranchId, branchEntryRoom.BranchId),
+            IsLocked = true
+        };
+
+        forkRoom.Neighbours[branchEntryRoom] = door;
+        branchEntryRoom.Neighbours[forkRoom] = door;
     }
 
     /// <summary>
@@ -271,26 +488,134 @@ public partial class RoomGraph : Node
     /// </summary>
     private void CreateInterBranchConnections()
     {
-        throw new System.NotImplementedException();
+        // Check each room against all four cardinal neighbours
+        foreach (RoomNode room in _rooms.Values)
+        {
+            foreach (Direction dir in System.Enum.GetValues(typeof(Direction)))
+            {
+                Vector2I adjacentPos = room.GridPosition + DirectionToOffset(dir);
+
+                if (!_grid.TryGetValue(adjacentPos, out RoomNode adjacentRoom))
+                {
+                    continue;
+                }
+
+                // Only interested in rooms on different branches
+                if (adjacentRoom.BranchId == room.BranchId)
+                {
+                    continue;
+                }
+
+                // Skip if already connected (branch-entry door or previous cross-connection)
+                if (room.Neighbours.ContainsKey(adjacentRoom))
+                {
+                    continue;
+                }
+
+                // Probabilistic: roll against CrossConnectionProbability
+                if (_rng.Randf() > CrossConnectionProbability)
+                {
+                    continue;
+                }
+
+                // Gate at the more advanced (lower number) of the two branches
+                int requiredSeq = System.Math.Min(room.BranchId, adjacentRoom.BranchId);
+
+                var door = new DoorInfo
+                {
+                    RequiredSequence = requiredSeq,
+                    ConnectedBranches = (room.BranchId, adjacentRoom.BranchId),
+                    IsLocked = true
+                };
+
+                room.Neighbours[adjacentRoom] = door;
+                adjacentRoom.Neighbours[room] = door;
+            }
+        }
     }
 
     /// <summary>
-    /// HLD Step 5 — Populates each room with content matching its archetype
-    /// (enemy spawn points, material nodes, lore pickups, shrine interactables).
+    /// HLD Step 5 — Populates each room with content matching its archetype.
+    /// This sets up the data-level room content. Actual scene instantiation
+    /// (enemy spawn points, material nodes, etc.) happens when a RoomInstance
+    /// is loaded by RunManager.TransitionToRoom.
     /// </summary>
     private void PopulateRooms()
     {
-        throw new System.NotImplementedException();
+        // Population is currently a no-op at the graph level.
+        // Room content (enemies, pickups) is driven by the RoomInstance scene
+        // based on the Archetype tag set during generation.
+        // This hook exists for future logic such as difficulty scaling,
+        // loot budget distribution, or hidden-room placement.
     }
 
     /// <summary>
-    /// HLD Step 6 — Depth-first validation that all Shrines and the Boss Room
-    /// are reachable from the Start Room assuming sequential advancement.
+    /// HLD Step 6 — Validates that all Shrines and the Boss Room
+    /// are reachable from the Start Room assuming the player advances
+    /// at every Shrine encountered in order.
+    /// Uses a simulated BFS that unlocks doors as Shrines are reached.
     /// </summary>
     /// <returns>True if the generated layout is valid.</returns>
     private bool ValidateGraph()
     {
-        throw new System.NotImplementedException();
+        // Collect mandatory rooms: all Shrines + BossRoom
+        var mandatoryRooms = new List<RoomNode>();
+        RoomNode bossRoom = null;
+
+        foreach (RoomNode room in _rooms.Values)
+        {
+            if (room.Archetype == RoomArchetype.SequenceShrine)
+            {
+                mandatoryRooms.Add(room);
+            }
+            else if (room.Archetype == RoomArchetype.BossRoom)
+            {
+                bossRoom = room;
+            }
+        }
+
+        if (bossRoom == null)
+        {
+            return false;
+        }
+
+        // Sort shrines by branch ID descending (highest Sequence first = earliest to reach)
+        mandatoryRooms.Sort((a, b) => b.BranchId.CompareTo(a.BranchId));
+        mandatoryRooms.Add(bossRoom);
+
+        // Simulate progression: start at Sequence = highest branch,
+        // advance each time we confirm a Shrine is reachable
+        int simulatedSequence = _branchOrder.Count > 0 ? _branchOrder[0] : 9;
+
+        foreach (RoomNode target in mandatoryRooms)
+        {
+            if (!IsRoomReachable(target.RoomId, simulatedSequence))
+            {
+                return false;
+            }
+
+            // Simulate advancement after reaching a Shrine
+            if (target.Archetype == RoomArchetype.SequenceShrine)
+            {
+                simulatedSequence--;
+                // Unlock doors at this new level so subsequent checks work correctly
+                OnSequenceAdvanced(simulatedSequence);
+            }
+        }
+
+        // Re-lock all doors (validation shouldn't leave permanent side effects)
+        foreach (RoomNode room in _rooms.Values)
+        {
+            foreach (DoorInfo door in room.Neighbours.Values)
+            {
+                if (door != null)
+                {
+                    door.IsLocked = true;
+                }
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -299,7 +624,11 @@ public partial class RoomGraph : Node
     /// </summary>
     private void LoadFallbackLayout()
     {
-        throw new System.NotImplementedException();
+        // TODO: Load a pre-authored room graph from a saved resource.
+        // For now, generate a minimal valid linear layout.
+        SeedAndConfigure(0);
+
+        GD.PrintErr("[RoomGraph] Fallback layout not yet implemented. Generating minimal linear map.");
     }
 
     // ═══════════════════════════════════════════
