@@ -174,28 +174,72 @@ All tunable parameters are stored in Godot `Resource` subclasses (`.tres` files)
 
 ## 6. Level & World Systems
 
+### World Generation — Random Walk with Sequence Branches
+
+The world is built from a **random walk algorithm** that produces a graph of hand-crafted rooms. Generation runs once at the start of each run using a seeded `RandomNumberGenerator`. The core concept is that the map is composed of **one branch per Sequence advancement** (e.g., a run from Sequence 9 → 5 produces five branches numbered 9, 8, 7, 6, and 5), plus a final boss branch.
+
+#### Generation Steps
+
+1. **Seed & configure.** Initialise the RNG with `RunManager.CurrentSeed`. Read the total number of branches from the player's Pathway (`SequenceStart` → `SequenceFinal`).
+
+2. **Walk the primary branch (Branch 9 / starting branch).**
+   - Beginning from the **Start Room**, perform a random walk: pick a random cardinal direction, place the next room from the pool of hand-crafted rooms that fit the archetype schedule (Combat → Material → Combat → Shrine, etc.), and repeat for a configurable length.
+   - The branch must end with a **Sequence Shrine** that allows the player to advance from Sequence 9 → 8.
+
+3. **Walk subsequent branches (Branch 8, 7, …, final).**
+   - Each new branch **forks from a random room on any previously placed branch**. The fork point becomes a doorway tagged with the branch's Sequence requirement (see *SequenceDoor* below).
+   - The walk proceeds exactly as Step 2: random directions, archetype-scheduled rooms, and the branch terminates with its own Sequence Shrine (or the Boss Antechamber + Boss Room for the final branch).
+
+4. **Create inter-branch connections.**
+   - After all branches are placed, the generator scans for rooms across *different* branches that are spatially adjacent on the grid. For each eligible pair it may (controlled by a tunable probability) add a **cross-connection doorway**.
+   - Every cross-connection door is tagged with `RequiredSequence = min(branchA, branchB)`, ensuring the player cannot use the shortcut until they have reached the lower (more advanced) of the two branches' Sequence tiers.
+   - Cross-connections to the primary branch (Branch 9) are also permitted — this lets the map loop back on itself naturally while still gating progress.
+
+5. **Populate rooms.** Each room is assigned content based on its archetype: enemy spawn points, material nodes, lore pickups, or shrine interactables.
+
+6. **Validation pass.** A depth-first traversal confirms that, starting from the Start Room and assuming the player advances at every Shrine encountered in order, all Shrines and the Boss Room are reachable. If validation fails, the generator reruns with a new seed (max 10 retries before fallback to a known-good layout).
+
+#### Key Constraints
+
+| Rule | Detail |
+|---|---|
+| Branch count | One branch per Sequence advancement + one boss branch |
+| Branch fork point | Must originate from a room on a previously generated branch |
+| Shrine placement | Exactly one Sequence Shrine at the end of each non-boss branch |
+| Cross-connection gating | `RequiredSequence = min(branchA, branchB)` — always locked to the more advanced Sequence of the two branches |
+| Boss access | Boss Antechamber is the terminal room of the final branch; only reachable after all prior advancements |
+
 ### RoomGraph
 
-The procedural level generator. Runs once at the start of each run using a seeded `RandomNumberGenerator`.
+The runtime data structure that owns the generated map. Persists for the duration of a run.
 
 **Responsibilities:**
-- Builds a directed graph of `RoomResource` nodes guaranteeing a valid critical path from start → Sequence Shrine(s) → boss antechamber → boss.
-- Distributes optional branches for material rooms, lore rooms, and hidden rooms.
-- Places `SequenceDoor` locks at tier boundaries; validates that all required Shrines are reachable before locks.
-- Exposes `GetAdjacentRooms(roomId)` and `IsRoomReachable(roomId, playerSequence)` to other systems.
-
-**Validation pass:** After graph generation, a depth-first traversal confirms that the boss room is reachable assuming the player completes every mandatory Shrine. If not, the generator reruns with a new seed (max 10 retries before fallback to a known-good layout).
+- Stores every room node and its adjacency list (including door metadata: open, locked, and `RequiredSequence`).
+- Tracks per-room state: `IsCleared`, `IsVisited`.
+- Exposes `GetAdjacentRooms(roomId)`, `GetDoorBetween(roomA, roomB)`, and `IsRoomReachable(roomId, playerSequence)` to other systems.
+- Listens for `SignalBus.SequenceAdvanced` and batch-unlocks every door whose `RequiredSequence` now matches the player's level.
 
 ### RoomInstance
 
 A loaded room scene placed in `RoomContainer`. Manages its own state within the run:
 - `IsCleared` (bool) — enemies defeated
 - `IsVisited` (bool) — used by Minimap
+- `BranchId` (int) — the Sequence branch this room belongs to
 - `ConnectionPoints` — Node2D markers at each cardinal edge, used by the transition system
 
 ### SequenceDoor
 
-A gate (AnimatableBody2D or Area2D trigger) placed in hand-crafted rooms. Listens for `SignalBus.SequenceAdvanced`; opens permanently when `PlayerSequence <= RequiredSequence`.
+A gate (AnimatableBody2D or Area2D trigger) that separates branches or forms cross-connections between them.
+
+| Property | Description |
+|---|---|
+| `RequiredSequence` (int) | The Sequence level that must be reached to unlock this door |
+| `ConnectedBranches` (int, int) | The two branch IDs this door bridges |
+| `IsLocked` (bool) | Current lock state; updated when `SignalBus.SequenceAdvanced` fires |
+
+- **Branch-entry doors** gate the start of a new branch (e.g., the door from a Branch 9 room into the first room of Branch 8 requires Sequence 8).
+- **Cross-connection doors** gate shortcuts between rooms on different branches; locked to `min(branchA, branchB)`.
+- Visual/audio cues distinguish locked doors by tier so players can identify which Sequence level is required at a glance.
 
 ### Room Archetypes
 
