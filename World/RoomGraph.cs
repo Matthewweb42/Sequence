@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using Sequence.Autoloads;
 
 namespace Sequence.World;
 
@@ -133,7 +134,18 @@ public partial class RoomGraph : Node
 
     public override void _Ready()
     {
-        // TODO: Connect to SignalBus.SequenceAdvanced
+        if (SignalBus.Instance != null)
+        {
+            SignalBus.Instance.SequenceAdvanced += OnSequenceAdvanced;
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        if (SignalBus.Instance != null)
+        {
+            SignalBus.Instance.SequenceAdvanced -= OnSequenceAdvanced;
+        }
     }
 
     // ═══════════════════════════════════════════
