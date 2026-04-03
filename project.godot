@@ -1,0 +1,57 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Sequence"
+run/main_scene="res://World/World.tscn"
+config/features=PackedStringArray("4.5", "C#")
+
+[autoload]
+
+GameManager="*res://Autoloads/GameManager.cs"
+RunManager="*res://Autoloads/RunManager.cs"
+ParticleSpawner="*res://Autoloads/ParticleSpawner.cs"
+SignalBus="*res://Autoloads/SignalBus.cs"
+
+[dotnet]
+
+project/assembly_name="Sequence"
+
+[input]
+
+move_left={
+"deadzone": 0.5,
+"events": []
+}
+move_right={
+"deadzone": 0.5,
+"events": []
+}
+move_up={
+"deadzone": 0.5,
+"events": []
+}
+move_down={
+"deadzone": 0.5,
+"events": []
+}
+attack={
+"deadzone": 0.5,
+"events": []
+}
+interact={
+"deadzone": 0.5,
+"events": []
+}
+pause={
+"deadzone": 0.5,
+"events": []
+}

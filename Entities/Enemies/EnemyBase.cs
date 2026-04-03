@@ -1,6 +1,8 @@
 using Godot;
 using Sequence.Components.Aggro;
+using Sequence.Components.Drop;
 using Sequence.Components.Health;
+using Sequence.Components.Hitbox;
 using Sequence.Components.StateMachine;
 
 namespace Sequence.Entities.Enemies;
@@ -11,18 +13,32 @@ namespace Sequence.Entities.Enemies;
 public partial class EnemyBase : CharacterBody2D
 {
 	[Export(PropertyHint.Range, "0,2000,1")] public float MoveSpeed { get; set; } = 140f;
-	[Export] public NodePath AggroPath { get; set; }
-	[Export] public NodePath HealthPath { get; set; }
-	[Export] public NodePath StateMachinePath { get; set; }
+	[Export(PropertyHint.Range, "0,1000,1")] public float AttackRange { get; set; } = 32f;
+	[Export(PropertyHint.Range, "0.01,5,0.01")] public float AttackCooldownSeconds { get; set; } = 1.1f;
+	[Export(PropertyHint.Range, "0.01,2,0.01")] public float AttackWindupSeconds { get; set; } = 0.15f;
+	[Export(PropertyHint.Range, "0.01,2,0.01")] public float AttackActiveSeconds { get; set; } = 0.12f;
+	[Export] public NodePath? AggroPath { get; set; }
+	[Export] public NodePath? HealthPath { get; set; }
+	[Export] public NodePath? HitboxPath { get; set; }
+	[Export] public NodePath? DropPath { get; set; }
+	[Export] public NodePath? StateMachinePath { get; set; }
+	[Export] public PackedScene? MaterialPickupScene { get; set; }
 
-	private AggroComponent _aggro;
-	private HealthComponent _health;
-	private StateMachineComponent _fsm;
+	private AggroComponent? _aggro;
+	private HealthComponent? _health;
+	private HitboxComponent? _hitbox;
+	private DropComponent? _drop;
+	private StateMachineComponent? _fsm;
+	private float _attackCooldownRemaining;
+	private float _attackWindupRemaining;
+	private float _attackActiveRemaining;
 
 	public override void _Ready()
 	{
 		_aggro = ResolveNode<AggroComponent>(AggroPath, "AggroComponent");
 		_health = ResolveNode<HealthComponent>(HealthPath, "HealthComponent");
+		_hitbox = ResolveNode<HitboxComponent>(HitboxPath, "HitboxComponent");
+		_drop = ResolveNode<DropComponent>(DropPath, "DropComponent");
 		_fsm = ResolveNode<StateMachineComponent>(StateMachinePath, "StateMachineComponent");
 
 		RegisterDefaultStates();
@@ -36,6 +52,11 @@ public partial class EnemyBase : CharacterBody2D
 		if (_health != null)
 		{
 			_health.Died += OnDied;
+		}
+
+		if (_drop != null)
+		{
+			_drop.DropRequested += OnDropRequested;
 		}
 	}
 
@@ -51,6 +72,46 @@ public partial class EnemyBase : CharacterBody2D
 		{
 			_health.Died -= OnDied;
 		}
+
+		if (_drop != null)
+		{
+			_drop.DropRequested -= OnDropRequested;
+		}
+	}
+
+	public override void _PhysicsProcess(double delta)
+	{
+		var step = (float)delta;
+		TickAttackTimers(step);
+
+		if (_health != null && _health.IsDead)
+		{
+			Velocity = Vector2.Zero;
+			MoveAndSlide();
+			return;
+		}
+
+		var currentState = _fsm?.CurrentStateName ?? string.Empty;
+		var target = _aggro?.CurrentTarget;
+
+		switch (currentState)
+		{
+			case "Chase":
+				UpdateChase(target);
+				break;
+			case "Attack":
+				Velocity = Vector2.Zero;
+				break;
+			case "Death":
+				Velocity = Vector2.Zero;
+				_hitbox?.DeactivateWindow();
+				break;
+			default:
+				Velocity = Vector2.Zero;
+				break;
+		}
+
+		MoveAndSlide();
 	}
 
 	private void RegisterDefaultStates()
@@ -71,17 +132,117 @@ public partial class EnemyBase : CharacterBody2D
 		_fsm?.QueueTransition("Chase");
 	}
 
-	private void OnAggroLost(Node2D target)
+	private void OnAggroLost(Node2D? target)
 	{
 		_fsm?.QueueTransition("Idle");
 	}
 
-	private void OnDied(Node source)
+	private void OnDied(Node? source)
 	{
+		_hitbox?.DeactivateWindow();
+		Velocity = Vector2.Zero;
 		_fsm?.TransitionNow("Death");
 	}
 
-	private T ResolveNode<T>(NodePath path, string fallbackName) where T : Node
+	private void OnDropRequested(Node ownerEntity, Vector2 worldPosition)
+	{
+		SpawnMaterialPickup(worldPosition);
+	}
+
+	private void UpdateChase(Node2D? target)
+	{
+		if (target == null || !GodotObject.IsInstanceValid(target))
+		{
+			Velocity = Vector2.Zero;
+			_fsm?.QueueTransition("Idle");
+			return;
+		}
+
+		var offset = target.GlobalPosition - GlobalPosition;
+		var distance = offset.Length();
+
+		if (distance <= AttackRange)
+		{
+			Velocity = Vector2.Zero;
+			if (CanStartAttack())
+			{
+				StartAttack();
+			}
+			return;
+		}
+
+		Velocity = offset.Normalized() * MoveSpeed;
+	}
+
+	private bool CanStartAttack()
+	{
+		return _attackCooldownRemaining <= 0f && _attackWindupRemaining <= 0f && _attackActiveRemaining <= 0f;
+	}
+
+	private void StartAttack()
+	{
+		_fsm?.TransitionNow("Attack");
+		_attackCooldownRemaining = AttackCooldownSeconds;
+		_attackWindupRemaining = AttackWindupSeconds;
+		_attackActiveRemaining = 0f;
+		_hitbox?.DeactivateWindow();
+	}
+
+	private void TickAttackTimers(float step)
+	{
+		if (_attackCooldownRemaining > 0f)
+		{
+			_attackCooldownRemaining = Mathf.Max(0f, _attackCooldownRemaining - step);
+		}
+
+		if (_attackWindupRemaining > 0f)
+		{
+			_attackWindupRemaining -= step;
+			if (_attackWindupRemaining <= 0f)
+			{
+				_attackWindupRemaining = 0f;
+				_hitbox?.ActivateWindow();
+				_attackActiveRemaining = AttackActiveSeconds;
+			}
+		}
+
+		if (_attackActiveRemaining > 0f)
+		{
+			_attackActiveRemaining -= step;
+			if (_attackActiveRemaining <= 0f)
+			{
+				_attackActiveRemaining = 0f;
+				_hitbox?.DeactivateWindow();
+				if (_health == null || !_health.IsDead)
+				{
+					if (_aggro != null && _aggro.HasTarget)
+					{
+						_fsm?.QueueTransition("Chase");
+					}
+					else
+					{
+						_fsm?.QueueTransition("Idle");
+					}
+				}
+			}
+		}
+	}
+
+	private void SpawnMaterialPickup(Vector2 worldPosition)
+	{
+		var root = GetTree()?.CurrentScene;
+		if (root == null || MaterialPickupScene == null)
+		{
+			return;
+		}
+
+		var pickup = MaterialPickupScene.Instantiate<Node2D>();
+		pickup.Name = "MaterialPickup";
+		root.AddChild(pickup);
+		pickup.GlobalPosition = worldPosition;
+	}
+
+	private T? ResolveNode<T>(NodePath? path, string fallbackName) where T : Node
 	{
 		if (path != null && !path.IsEmpty)
 		{

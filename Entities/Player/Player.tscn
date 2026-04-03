@@ -1,0 +1,72 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
+[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_g5wqj"]
+[ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="3_8k6sx"]
+[ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="4_u2c8v"]
+[ext_resource type="Script" path="res://Components/Sanity/SanityComponent.cs" id="5_n3x6m"]
+[ext_resource type="Script" path="res://Components/Sequence/SequenceComponent.cs" id="6_e8q1c"]
+[ext_resource type="Script" path="res://Components/Inventory/InventoryComponent.cs" id="7_m9p2h"]
+[ext_resource type="Script" path="res://Components/Ability/AbilityComponent.cs" id="8_j4f0r"]
+[ext_resource type="Script" path="res://Components/Pathway/PathwayComponent.cs" id="9_v7d3k"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(18, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(16, 22)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
+radius = 16.0
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_k2mn4")
+collision_layer = 16
+collision_mask = 288
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="DebugBody" type="Polygon2D" parent="."]
+color = Color(0.203922, 0.780392, 0.929412, 1)
+polygon = PackedVector2Array(-9, -12, -9, 12, 9, 12, 9, -12)
+
+[node name="DebugFace" type="Polygon2D" parent="."]
+color = Color(0.054902, 0.0862745, 0.129412, 1)
+polygon = PackedVector2Array(2, -4, 2, 0, 6, 0, 6, -4)
+
+[node name="HealthComponent" type="Node" parent="." script=ExtResource("2_g5wqj")]
+
+[node name="SanityComponent" type="Node" parent="." script=ExtResource("5_n3x6m")]
+
+[node name="HurtboxComponent" type="Area2D" parent="." script=ExtResource("3_8k6sx")]
+Team = 1
+collision_layer = 1
+collision_mask = 128
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
+shape = SubResource("RectangleShape2D_hurtbox")
+
+[node name="HitboxComponent" type="Area2D" parent="." script=ExtResource("4_u2c8v")]
+Team = 1
+collision_layer = 4
+collision_mask = 2
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
+shape = SubResource("CircleShape2D_hitbox")
+
+[node name="SequenceComponent" type="Node" parent="." script=ExtResource("6_e8q1c")]
+
+[node name="InventoryComponent" type="Node" parent="." script=ExtResource("7_m9p2h")]
+
+[node name="AbilityComponent" type="Node" parent="." script=ExtResource("8_j4f0r")]
+
+[node name="PathwayComponent" type="Node" parent="." script=ExtResource("9_v7d3k")]
+AbilityPath = NodePath("../AbilityComponent")
+StartingAbilityIds = PackedStringArray("basic_attack")

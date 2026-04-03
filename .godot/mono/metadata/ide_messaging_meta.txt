@@ -1,0 +1,2 @@
+﻿62453
+C:/Users/webec/Godot_v4.5.1-stable_mono_windows_arm64/Godot_v4.5.1-stable_mono_windows_arm64.exe

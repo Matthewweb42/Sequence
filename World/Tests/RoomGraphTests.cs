@@ -1,6 +1,8 @@
 using Godot;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Sequence.Autoloads;
 using Sequence.World;
 
 namespace Sequence.Tests;
@@ -12,6 +14,7 @@ namespace Sequence.Tests;
 /// (unimplemented) generation pipeline.
 /// </summary>
 [TestClass]
+[TestCategory("GodotRuntime")]
 public class RoomGraphTests
 {
     // ─────────────────────────────────────────────
@@ -489,6 +492,33 @@ public class RoomGraphTests
         Assert.IsTrue(_door8.IsLocked);
         Assert.IsTrue(_door7.IsLocked);
         Assert.IsTrue(_crossDoor.IsLocked);
+    }
+
+    [TestMethod]
+    public void OnSequenceAdvanced_PublishedOnSignalBus_UnlocksDoors()
+    {
+        SetUpStandardGraph();
+
+        var signalBus = new SignalBus();
+        signalBus._Ready();
+
+        try
+        {
+            _graph._Ready();
+
+            Assert.IsTrue(_door8.IsLocked);
+            Assert.IsTrue(_door7.IsLocked);
+
+            signalBus.PublishSequenceAdvanced(8);
+
+            Assert.IsFalse(_door8.IsLocked);
+            Assert.IsTrue(_door7.IsLocked);
+        }
+        finally
+        {
+            _graph._ExitTree();
+            signalBus._ExitTree();
+        }
     }
 
     // ═══════════════════════════════════════════

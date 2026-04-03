@@ -1,0 +1,76 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
+[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_d9k6q"]
+[ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="3_s1m7h"]
+[ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="4_q4b8x"]
+[ext_resource type="Script" path="res://Components/StateMachine/StateMachineComponent.cs" id="5_f2p9t"]
+[ext_resource type="Script" path="res://Components/Aggro/AggroComponent.cs" id="6_r7c3w"]
+[ext_resource type="Script" path="res://Components/Drop/DropComponent.cs" id="7_h1n5m"]
+[ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="8_w2r5y"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(18, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(16, 22)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
+radius = 14.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_aggro"]
+radius = 180.0
+
+[node name="Enemy" type="CharacterBody2D"]
+script = ExtResource("1_u5a2n")
+MaterialPickupScene = ExtResource("8_w2r5y")
+collision_layer = 32
+collision_mask = 272
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="DebugBody" type="Polygon2D" parent="."]
+color = Color(0.862745, 0.337255, 0.337255, 1)
+polygon = PackedVector2Array(-9, -12, -9, 12, 9, 12, 9, -12)
+
+[node name="DebugFace" type="Polygon2D" parent="."]
+color = Color(0.2, 0.0588235, 0.0588235, 1)
+polygon = PackedVector2Array(-6, -4, -6, 0, -2, 0, -2, -4)
+
+[node name="HealthComponent" type="Node" parent="." script=ExtResource("2_d9k6q")]
+MaxHp = 35.0
+
+[node name="HurtboxComponent" type="Area2D" parent="." script=ExtResource("3_s1m7h")]
+Team = 2
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
+shape = SubResource("RectangleShape2D_hurtbox")
+
+[node name="HitboxComponent" type="Area2D" parent="." script=ExtResource("4_q4b8x")]
+Team = 2
+collision_layer = 8
+collision_mask = 1
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
+shape = SubResource("CircleShape2D_hitbox")
+
+[node name="StateMachineComponent" type="Node" parent="." script=ExtResource("5_f2p9t")]
+
+[node name="AggroComponent" type="Area2D" parent="." script=ExtResource("6_r7c3w")]
+RequireLineOfSight = false
+collision_layer = 64
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AggroComponent"]
+shape = SubResource("CircleShape2D_aggro")
+
+[node name="DropComponent" type="Node" parent="." script=ExtResource("7_h1n5m")]

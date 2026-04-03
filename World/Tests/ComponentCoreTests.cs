@@ -9,6 +9,7 @@ using Sequence.Components.StateMachine;
 namespace Sequence.Tests;
 
 [TestClass]
+[TestCategory("GodotRuntime")]
 public class ComponentCoreTests
 {
     [TestMethod]

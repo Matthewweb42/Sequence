@@ -8,9 +8,9 @@ namespace Sequence.Components.Health;
 /// </summary>
 public partial class HealthComponent : Node
 {
-	[Signal] public delegate void DamagedEventHandler(float amount, float currentHp, float maxHp, Node source);
+	[Signal] public delegate void DamagedEventHandler(float amount, float currentHp, float maxHp, Node? source);
 	[Signal] public delegate void HealedEventHandler(float amount, float currentHp, float maxHp);
-	[Signal] public delegate void DiedEventHandler(Node source);
+	[Signal] public delegate void DiedEventHandler(Node? source);
 
 	[Export(PropertyHint.Range, "1,10000,1")] public float MaxHp { get; set; } = 100f;
 	[Export] public bool StartAtMaxHp { get; set; } = true;
@@ -27,23 +27,25 @@ public partial class HealthComponent : Node
 		SignalBus.Instance?.PublishHealthChanged(GetOwnerEntity(), CurrentHp, MaxHp);
 	}
 
-	public bool TakeDamage(float amount, Node source = null)
+	public bool TakeDamage(float amount, Node? source = null)
 	{
 		if (IsDead || amount <= 0f)
 		{
 			return false;
 		}
 
+		var sourceNode = source ?? GetOwnerEntity();
+
 		CurrentHp = Mathf.Clamp(CurrentHp - amount, 0f, MaxHp);
 
-		EmitSignal(SignalName.Damaged, amount, CurrentHp, MaxHp, source);
+		EmitSignal(SignalName.Damaged, amount, CurrentHp, MaxHp, sourceNode);
 		SignalBus.Instance?.PublishHealthChanged(GetOwnerEntity(), CurrentHp, MaxHp);
 
 		if (CurrentHp <= 0f && !IsDead)
 		{
 			IsDead = true;
-			EmitSignal(SignalName.Died, source);
-			SignalBus.Instance?.PublishEntityDied(GetOwnerEntity(), source);
+			EmitSignal(SignalName.Died, sourceNode);
+			SignalBus.Instance?.PublishEntityDied(GetOwnerEntity(), sourceNode);
 		}
 
 		return true;

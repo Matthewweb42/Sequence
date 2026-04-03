@@ -10,11 +10,11 @@ public partial class BossPhaseComponent : Node
 {
 	[Signal] public delegate void BossPhaseChangedEventHandler(int newPhase);
 
-	[Export] public NodePath HealthPath { get; set; }
+	[Export] public NodePath? HealthPath { get; set; }
 	[Export(PropertyHint.Range, "0,1,0.01")] public float PhaseTwoThreshold { get; set; } = 0.66f;
 	[Export(PropertyHint.Range, "0,1,0.01")] public float PhaseThreeThreshold { get; set; } = 0.33f;
 
-	private HealthComponent _health;
+	private HealthComponent? _health;
 
 	public int CurrentPhase { get; private set; } = 1;
 
@@ -35,7 +35,7 @@ public partial class BossPhaseComponent : Node
 		}
 	}
 
-	private void OnDamaged(float amount, float currentHp, float maxHp, Node source)
+	private void OnDamaged(float amount, float currentHp, float maxHp, Node? source)
 	{
 		if (maxHp <= 0f)
 		{
@@ -65,7 +65,7 @@ public partial class BossPhaseComponent : Node
 		EmitSignal(SignalName.BossPhaseChanged, CurrentPhase);
 	}
 
-	private HealthComponent ResolveHealth()
+	private HealthComponent? ResolveHealth()
 	{
 		if (HealthPath != null && !HealthPath.IsEmpty)
 		{

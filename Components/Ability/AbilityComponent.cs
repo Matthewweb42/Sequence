@@ -1,4 +1,5 @@
 using Godot;
+using Sequence.Components.Sanity;
 using System.Collections.Generic;
 
 namespace Sequence.Components.Ability;
@@ -15,22 +16,25 @@ public partial class AbilityComponent : Node
 	[Export] public bool EnableDebugAbility { get; set; }
 	[Export] public string DebugAbilityId { get; set; } = "basic_attack";
 	[Export(PropertyHint.Range, "0,120,0.1")] public float DefaultCooldownSeconds { get; set; } = 0.5f;
+	[Export(PropertyHint.Range, "0,1000,0.1")] public float DefaultSanityCost { get; set; } = 5f;
+	[Export] public NodePath? SanityPath { get; set; }
 
-	private readonly Dictionary<string, float> _cooldownsRemaining = new();
+	private readonly AbilityCooldownTracker _cooldownTracker = new();
 	private readonly HashSet<string> _unlockedAbilities = new();
+	private SanityComponent? _sanity;
+
+	public override void _Ready()
+	{
+		_sanity = ResolveSanity();
+	}
 
 	public override void _Process(double delta)
 	{
-		var step = (float)delta;
-		if (_cooldownsRemaining.Count == 0)
-		{
-			return;
-		}
+		_cooldownTracker.Tick((float)delta);
 
-		var keys = new List<string>(_cooldownsRemaining.Keys);
-		foreach (var key in keys)
+		if (_sanity == null || !GodotObject.IsInstanceValid(_sanity))
 		{
-			_cooldownsRemaining[key] = Mathf.Max(0f, _cooldownsRemaining[key] - step);
+			_sanity = ResolveSanity();
 		}
 	}
 
@@ -42,7 +46,7 @@ public partial class AbilityComponent : Node
 		}
 	}
 
-	public bool TryActivate(string abilityId, float cooldownSeconds = -1f)
+	public bool TryActivate(string abilityId, float cooldownSeconds = -1f, float sanityCost = -1f)
 	{
 		if (string.IsNullOrWhiteSpace(abilityId))
 		{
@@ -56,18 +60,50 @@ public partial class AbilityComponent : Node
 			return false;
 		}
 
-		if (_cooldownsRemaining.TryGetValue(abilityId, out var remaining) && remaining > 0f)
+		if (_cooldownTracker.IsOnCooldown(abilityId))
 		{
 			EmitSignal(SignalName.AbilityBlocked, abilityId, "cooldown_active");
 			return false;
 		}
 
+		var cost = sanityCost >= 0f ? sanityCost : DefaultSanityCost;
+		if (cost > 0f)
+		{
+			var sanity = _sanity ??= ResolveSanity();
+			if (sanity == null)
+			{
+				EmitSignal(SignalName.AbilityBlocked, abilityId, "missing_sanity_component");
+				return false;
+			}
+
+			if (!sanity.TrySpend(cost))
+			{
+				EmitSignal(SignalName.AbilityBlocked, abilityId, "insufficient_sanity");
+				return false;
+			}
+		}
+
 		var cd = cooldownSeconds >= 0f ? cooldownSeconds : DefaultCooldownSeconds;
-		_cooldownsRemaining[abilityId] = cd;
+		_cooldownTracker.StartCooldown(abilityId, cd);
 
 		EmitSignal(SignalName.AbilityActivated, abilityId);
 		EmitSignal(SignalName.AbilityCooldownStarted, abilityId, cd);
 		return true;
+	}
+
+	public float GetCooldownRemaining(string abilityId)
+	{
+		return _cooldownTracker.GetCooldownRemaining(abilityId);
+	}
+
+	private SanityComponent? ResolveSanity()
+	{
+		if (SanityPath != null && !SanityPath.IsEmpty)
+		{
+			return GetNodeOrNull<SanityComponent>(SanityPath);
+		}
+
+		return GetParent()?.GetNodeOrNull<SanityComponent>("SanityComponent");
 	}
 }
 

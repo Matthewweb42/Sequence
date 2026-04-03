@@ -10,9 +10,9 @@ public partial class DropComponent : Node
 {
 	[Signal] public delegate void DropRequestedEventHandler(Node ownerEntity, Vector2 worldPosition);
 
-	[Export] public NodePath HealthPath { get; set; }
+	[Export] public NodePath? HealthPath { get; set; }
 
-	private HealthComponent _health;
+	private HealthComponent? _health;
 
 	public override void _Ready()
 	{
@@ -31,14 +31,14 @@ public partial class DropComponent : Node
 		}
 	}
 
-	private void OnOwnerDied(Node source)
+	private void OnOwnerDied(Node? source)
 	{
 		var ownerEntity = GetParent() ?? this;
 		var worldPosition = ownerEntity is Node2D node2D ? node2D.GlobalPosition : Vector2.Zero;
 		EmitSignal(SignalName.DropRequested, ownerEntity, worldPosition);
 	}
 
-	private HealthComponent ResolveHealth()
+	private HealthComponent? ResolveHealth()
 	{
 		if (HealthPath != null && !HealthPath.IsEmpty)
 		{

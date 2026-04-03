@@ -7,10 +7,10 @@ namespace Sequence.Autoloads;
 /// </summary>
 public partial class SignalBus : Node
 {
-	public static SignalBus Instance { get; private set; }
+	public static SignalBus? Instance { get; private set; }
 
 	[Signal] public delegate void HealthChangedEventHandler(Node entity, float current, float max);
-	[Signal] public delegate void EntityDiedEventHandler(Node entity, Node source);
+	[Signal] public delegate void EntityDiedEventHandler(Node entity, Node? source);
 	[Signal] public delegate void HitLandedEventHandler(Node attacker, Node victim, float amount);
 	[Signal] public delegate void AggroAcquiredEventHandler(Node owner, Node target);
 	[Signal] public delegate void AggroLostEventHandler(Node owner, Node target);
@@ -35,9 +35,9 @@ public partial class SignalBus : Node
 		EmitSignal(SignalName.HealthChanged, entity, current, max);
 	}
 
-	public void PublishEntityDied(Node entity, Node source)
+	public void PublishEntityDied(Node entity, Node? source)
 	{
-		EmitSignal(SignalName.EntityDied, entity, source);
+		EmitSignal(SignalName.EntityDied, entity, source ?? entity);
 	}
 
 	public void PublishHitLanded(Node attacker, Node victim, float amount)

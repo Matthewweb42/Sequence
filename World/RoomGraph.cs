@@ -83,7 +83,7 @@ public class RoomNode
     /// Adjacency list: maps a neighbouring RoomNode to the DoorInfo
     /// that separates them (null if the connection is always open).
     /// </summary>
-    public Dictionary<RoomNode, DoorInfo> Neighbours { get; set; } = new();
+    public Dictionary<RoomNode, DoorInfo?> Neighbours { get; set; } = new();
 }
 
 // ─────────────────────────────────────────────
@@ -176,7 +176,7 @@ public partial class RoomGraph : Node
             {
                 _branchOrder.Add(seq);
                 bool isBossBranch = (seq == sequenceFinal);
-                List<RoomNode> branchRooms = WalkSubsequentBranch(seq, isBossBranch);
+                List<RoomNode>? branchRooms = WalkSubsequentBranch(seq, isBossBranch);
 
                 // I might make changes to the WalkSubsequentBranch algo bc it'll make exploration more interesting if the branches cross more and therefore should handle crossed pathes better
                 if (branchRooms == null || branchRooms.Count == 0)
@@ -257,10 +257,10 @@ public partial class RoomGraph : Node
     /// <param name="branchId">Sequence tier for this branch.</param>
     /// <param name="isBossBranch">If true, terminates with Boss Antechamber + Boss Room instead of a Shrine.</param>
     /// <returns>The list of RoomNodes placed on this branch, or null if no valid fork point was found.</returns>
-    private List<RoomNode> WalkSubsequentBranch(int branchId, bool isBossBranch)
+    private List<RoomNode>? WalkSubsequentBranch(int branchId, bool isBossBranch)
     {
         // Pick a fork point on an existing branch that has at least one free adjacent cell
-        RoomNode forkRoom = SelectForkPoint();
+        RoomNode? forkRoom = SelectForkPoint();
         if (forkRoom == null)
         {
             return null;
@@ -444,7 +444,7 @@ public partial class RoomGraph : Node
     /// and Boss rooms to keep fork points in traversal-friendly locations.
     /// </summary>
     /// <returns>The RoomNode chosen as the fork origin, or null if none available.</returns>
-    private RoomNode SelectForkPoint()
+    private RoomNode? SelectForkPoint()
     {
         var candidates = new List<RoomNode>();
 
@@ -507,7 +507,7 @@ public partial class RoomGraph : Node
             {
                 Vector2I adjacentPos = room.GridPosition + DirectionToOffset(dir);
 
-                if (!_grid.TryGetValue(adjacentPos, out RoomNode adjacentRoom))
+                if (!_grid.TryGetValue(adjacentPos, out RoomNode? adjacentRoom) || adjacentRoom == null)
                 {
                     continue;
                 }
@@ -572,7 +572,7 @@ public partial class RoomGraph : Node
     {
         // Collect mandatory rooms: all Shrines + BossRoom
         var mandatoryRooms = new List<RoomNode>();
-        RoomNode bossRoom = null;
+        RoomNode? bossRoom = null;
 
         foreach (RoomNode room in _rooms.Values)
         {
@@ -618,7 +618,7 @@ public partial class RoomGraph : Node
         // Re-lock all doors (validation shouldn't leave permanent side effects)
         foreach (RoomNode room in _rooms.Values)
         {
-            foreach (DoorInfo door in room.Neighbours.Values)
+            foreach (DoorInfo? door in room.Neighbours.Values)
             {
                 if (door != null)
                 {
@@ -655,7 +655,7 @@ public partial class RoomGraph : Node
     /// <returns>List of adjacent RoomNodes.</returns>
     public List<RoomNode> GetAdjacentRooms(int roomId)
     {
-        if (!_rooms.TryGetValue(roomId, out RoomNode room))
+        if (!_rooms.TryGetValue(roomId, out RoomNode? room) || room == null)
         {
             return new List<RoomNode>();
         }
@@ -670,20 +670,20 @@ public partial class RoomGraph : Node
     /// <param name="roomIdA">First room ID.</param>
     /// <param name="roomIdB">Second room ID.</param>
     /// <returns>DoorInfo if a gated door exists; otherwise null.</returns>
-    public DoorInfo GetDoorBetween(int roomIdA, int roomIdB)
+    public DoorInfo? GetDoorBetween(int roomIdA, int roomIdB)
     {
-        if (!_rooms.TryGetValue(roomIdA, out RoomNode roomA))
+        if (!_rooms.TryGetValue(roomIdA, out RoomNode? roomA) || roomA == null)
         {
             return null;
         }
 
-        if (!_rooms.TryGetValue(roomIdB, out RoomNode roomB))
+        if (!_rooms.TryGetValue(roomIdB, out RoomNode? roomB) || roomB == null)
         {
             return null;
         }
 
         // Check if roomB is a neighbour of roomA and return the door (may be null for open connections)
-        roomA.Neighbours.TryGetValue(roomB, out DoorInfo door);
+        roomA.Neighbours.TryGetValue(roomB, out DoorInfo? door);
         return door;
     }
 
@@ -747,9 +747,9 @@ public partial class RoomGraph : Node
     /// </summary>
     /// <param name="roomId">The room's unique identifier.</param>
     /// <returns>The matching RoomNode, or null if not found.</returns>
-    public RoomNode GetRoom(int roomId)
+    public RoomNode? GetRoom(int roomId)
     {
-        _rooms.TryGetValue(roomId, out RoomNode room);
+        _rooms.TryGetValue(roomId, out RoomNode? room);
         return room;
     }
 
@@ -788,7 +788,7 @@ public partial class RoomGraph : Node
         // newSequence <= door.RequiredSequence.
         foreach (RoomNode room in _rooms.Values)
         {
-            foreach (DoorInfo door in room.Neighbours.Values)
+            foreach (DoorInfo? door in room.Neighbours.Values)
             {
                 if (door == null || !door.IsLocked)
                 {

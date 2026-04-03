@@ -1,0 +1,92 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://World/RoomGraph.cs" id="1_57qx7"]
+[ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_3d6ty"]
+[ext_resource type="PackedScene" path="res://Entities/Enemies/Enemy.tscn" id="3_p4n8m"]
+[ext_resource type="PackedScene" path="res://Entities/Interactables/SequenceShrine.tscn" id="4_f1m8z"]
+[ext_resource type="PackedScene" path="res://UI/HUD/HUD.tscn" id="5_s3w8q"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
+size = Vector2(900, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
+size = Vector2(20, 600)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_block"]
+size = Vector2(140, 60)
+
+[node name="World" type="Node2D"]
+
+[node name="RoomGraph" type="Node" parent="." script=ExtResource("1_57qx7")]
+
+[node name="TempArena" type="Node2D" parent="."]
+
+[node name="Ground" type="Polygon2D" parent="TempArena"]
+color = Color(0.121569, 0.152941, 0.180392, 1)
+polygon = PackedVector2Array(0, 0, 0, 600, 900, 600, 900, 0)
+
+[node name="TopWall" type="StaticBody2D" parent="TempArena"]
+position = Vector2(450, -10)
+collision_layer = 256
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TempArena/TopWall"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallVisual" type="Polygon2D" parent="TempArena/TopWall"]
+color = Color(0.243137, 0.286275, 0.333333, 1)
+polygon = PackedVector2Array(-450, -10, -450, 10, 450, 10, 450, -10)
+
+[node name="BottomWall" type="StaticBody2D" parent="TempArena"]
+position = Vector2(450, 610)
+collision_layer = 256
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TempArena/BottomWall"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallVisual" type="Polygon2D" parent="TempArena/BottomWall"]
+color = Color(0.243137, 0.286275, 0.333333, 1)
+polygon = PackedVector2Array(-450, -10, -450, 10, 450, 10, 450, -10)
+
+[node name="LeftWall" type="StaticBody2D" parent="TempArena"]
+position = Vector2(-10, 300)
+collision_layer = 256
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TempArena/LeftWall"]
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="WallVisual" type="Polygon2D" parent="TempArena/LeftWall"]
+color = Color(0.243137, 0.286275, 0.333333, 1)
+polygon = PackedVector2Array(-10, -300, -10, 300, 10, 300, 10, -300)
+
+[node name="RightWall" type="StaticBody2D" parent="TempArena"]
+position = Vector2(910, 300)
+collision_layer = 256
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TempArena/RightWall"]
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="WallVisual" type="Polygon2D" parent="TempArena/RightWall"]
+color = Color(0.243137, 0.286275, 0.333333, 1)
+polygon = PackedVector2Array(-10, -300, -10, 300, 10, 300, 10, -300)
+
+[node name="CenterBlock" type="StaticBody2D" parent="TempArena"]
+position = Vector2(450, 300)
+collision_layer = 256
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TempArena/CenterBlock"]
+shape = SubResource("RectangleShape2D_block")
+
+[node name="BlockVisual" type="Polygon2D" parent="TempArena/CenterBlock"]
+color = Color(0.286275, 0.34902, 0.403922, 1)
+polygon = PackedVector2Array(-70, -30, -70, 30, 70, 30, 70, -30)
+
+[node name="Player" parent="." instance=ExtResource("2_3d6ty")]
+position = Vector2(120, 120)
+
+[node name="Enemy" parent="." instance=ExtResource("3_p4n8m")]
+position = Vector2(760, 460)
+
+[node name="SequenceShrine" parent="." instance=ExtResource("4_f1m8z")]
+position = Vector2(120, 520)
+
+[node name="HUD" parent="." instance=ExtResource("5_s3w8q")]

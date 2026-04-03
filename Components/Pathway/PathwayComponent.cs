@@ -12,7 +12,7 @@ public partial class PathwayComponent : Node
 
 	[Export] public string PathwayId { get; set; } = "seeker";
 	[Export] public string[] StartingAbilityIds { get; set; } = System.Array.Empty<string>();
-	[Export] public NodePath AbilityPath { get; set; }
+	[Export] public NodePath? AbilityPath { get; set; }
 
 	public override void _Ready()
 	{

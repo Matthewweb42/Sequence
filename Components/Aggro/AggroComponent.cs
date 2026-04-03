@@ -10,19 +10,19 @@ namespace Sequence.Components.Aggro;
 public partial class AggroComponent : Area2D
 {
 	[Signal] public delegate void AggroAcquiredEventHandler(Node2D target);
-	[Signal] public delegate void AggroLostEventHandler(Node2D target);
+	[Signal] public delegate void AggroLostEventHandler(Node2D? target);
 
 	[Export] public bool RequireLineOfSight { get; set; } = true;
 	[Export(PropertyHint.Range, "0,5,0.05")] public float LoseAggroDelaySeconds { get; set; } = 0.75f;
 	[Export(PropertyHint.Layers2DPhysics)] public uint OcclusionMask { get; set; } = uint.MaxValue;
-	[Export] public NodePath ExplicitTargetPath { get; set; }
+	[Export] public NodePath? ExplicitTargetPath { get; set; }
 
 	private readonly HashSet<Node2D> _candidates = new();
-	private Node2D _currentTarget;
+	private Node2D? _currentTarget;
 	private float _timeSinceLastSeen;
 
 	public bool HasTarget => _currentTarget != null;
-	public Node2D CurrentTarget => _currentTarget;
+	public Node2D? CurrentTarget => _currentTarget;
 
 	public override void _Ready()
 	{
@@ -69,7 +69,7 @@ public partial class AggroComponent : Area2D
 		}
 	}
 
-	private Node2D ResolveVisibleTarget()
+	private Node2D? ResolveVisibleTarget()
 	{
 		foreach (var candidate in _candidates)
 		{
@@ -99,9 +99,13 @@ public partial class AggroComponent : Area2D
 		query.CollisionMask = OcclusionMask;
 		query.Exclude = new Godot.Collections.Array<Rid>
 		{
-			GetRid(),
-			target.GetRid()
+			GetRid()
 		};
+
+		if (target is CollisionObject2D collisionTarget)
+		{
+			query.Exclude.Add(collisionTarget.GetRid());
+		}
 
 		var result = spaceState.IntersectRay(query);
 		return result.Count == 0;
@@ -118,6 +122,11 @@ public partial class AggroComponent : Area2D
 	private void LoseTarget()
 	{
 		var lost = _currentTarget;
+		if (lost == null)
+		{
+			return;
+		}
+
 		_currentTarget = null;
 		_timeSinceLastSeen = 0f;
 		EmitSignal(SignalName.AggroLost, lost);

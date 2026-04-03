@@ -52,6 +52,10 @@ public partial class HitboxComponent : Area2D
 		{
 			_hitTargetsThisWindow.Clear();
 			EmitSignal(SignalName.HitboxActivated);
+			foreach (var overlap in GetOverlappingAreas())
+			{
+				OnAreaEntered(overlap);
+			}
 		}
 		else
 		{

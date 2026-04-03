@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://Entities/Enemies/Enemy.tscn" id="1_5d2km"]
+[ext_resource type="Script" path="res://Entities/Enemies/Boss/BossPhaseComponent.cs" id="2_m8q4v"]
+
+[node name="Boss" instance=ExtResource("1_5d2km")]
+
+[node name="BossPhaseComponent" type="Node" parent="." script=ExtResource("2_m8q4v")]

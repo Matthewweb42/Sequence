@@ -12,14 +12,14 @@ namespace Sequence.Components.Hurtbox;
 public partial class HurtboxComponent : Area2D
 {
 	[Signal] public delegate void HitAcceptedEventHandler(Node attacker, float damage);
-	[Signal] public delegate void HitRejectedEventHandler(Node attacker, string reason);
+	[Signal] public delegate void HitRejectedEventHandler(Node? attacker, string reason);
 
 	[Export] public CombatTeam Team { get; set; } = CombatTeam.Enemy;
 	[Export] public bool IsInvulnerable { get; set; }
 	[Export(PropertyHint.Range, "0,5,0.05")] public float IFrameDurationSeconds { get; set; } = 0.1f;
-	[Export] public NodePath HealthPath { get; set; }
+	[Export] public NodePath? HealthPath { get; set; }
 
-	private HealthComponent _health;
+	private HealthComponent? _health;
 	private float _invulnTimer;
 
 	public override void _Ready()
@@ -35,11 +35,11 @@ public partial class HurtboxComponent : Area2D
 		}
 	}
 
-	public bool ReceiveHit(HitboxComponent source)
+	public bool ReceiveHit(HitboxComponent? source)
 	{
 		if (source == null)
 		{
-			EmitSignal(SignalName.HitRejected, null, "no_source");
+			EmitSignal(SignalName.HitRejected, new Variant(), "no_source");
 			return false;
 		}
 
@@ -102,7 +102,7 @@ public partial class HurtboxComponent : Area2D
 		_invulnTimer = Mathf.Max(_invulnTimer, durationSeconds);
 	}
 
-	private HealthComponent ResolveHealthComponent()
+	private HealthComponent? ResolveHealthComponent()
 	{
 		if (HealthPath != null && !HealthPath.IsEmpty)
 		{

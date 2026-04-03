@@ -16,7 +16,7 @@ public partial class StateMachineComponent : Node
 	private readonly Dictionary<string, State> _states = new();
 	private readonly Queue<string> _transitionQueue = new();
 
-	public State CurrentState { get; private set; }
+	public State? CurrentState { get; private set; }
 	public string CurrentStateName => CurrentState?.Name ?? string.Empty;
 
 	public bool RegisterState(State state, bool setAsInitial = false)
