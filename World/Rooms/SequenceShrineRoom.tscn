@@ -1,0 +1,60 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://World/RoomInstance.cs" id="1_roominstance"]
+[ext_resource type="Script" path="res://World/RoomTransitionHandler.cs" id="2_roomtransition"]
+
+[sub_resource type="TileSet" id="tileset_placeholder"]
+tile_size = Vector2i(16, 16)
+
+[sub_resource type="RectangleShape2D" id="connectionpoint_collision"]
+size = Vector2(40, 40)
+
+[node name="SequenceShrineRoom" type="Node2D" script=ExtResource("1_roominstance")]
+position = Vector2(0, 0)
+
+[node name="Tilemap" type="TileMap" parent="."]
+tile_set = SubResource("tileset_placeholder")
+format = 2
+
+[node name="ConnectionPoints" type="Node" parent="."]
+
+[node name="North" type="Area2D" parent="ConnectionPoints" script=ExtResource("2_roomtransition")]
+position = Vector2(0, -180)
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ConnectionPoints/North"]
+shape = SubResource("connectionpoint_collision")
+
+[node name="South" type="Area2D" parent="ConnectionPoints" script=ExtResource("2_roomtransition")]
+position = Vector2(0, 180)
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ConnectionPoints/South"]
+shape = SubResource("connectionpoint_collision")
+
+[node name="East" type="Area2D" parent="ConnectionPoints" script=ExtResource("2_roomtransition")]
+position = Vector2(180, 0)
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ConnectionPoints/East"]
+shape = SubResource("connectionpoint_collision")
+
+[node name="West" type="Area2D" parent="ConnectionPoints" script=ExtResource("2_roomtransition")]
+position = Vector2(-180, 0)
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ConnectionPoints/West"]
+shape = SubResource("connectionpoint_collision")
+
+[node name="EnemySpawnPoints" type="Node" parent="."]
+
+[node name="MaterialNodes" type="Node" parent="."]
+
+[node name="SequenceDoors" type="Node" parent="."]
+
+[node name="ShrineInteractable" type="Node2D" parent="."]
+position = Vector2(0, 0)
