@@ -1,0 +1,351 @@
+using Godot;
+using System.Collections.Generic;
+
+namespace Sequence.World;
+
+/// <summary>
+/// A loaded room scene instance. Manages room state (cleared, visited), 
+/// tracks enemies, emits signals when cleared, and provides connection points
+/// for player transitions between rooms.
+/// </summary>
+public partial class RoomInstance : Node2D
+{
+	// ─────────────────────────────────────────────
+	//  Exported Properties (set in inspector or by creator)
+	// ─────────────────────────────────────────────
+
+	/// <summary>The RoomId registered in RoomGraph.</summary>
+	public int RoomId { get; set; }
+
+	/// <summary>The Sequence branch this room belongs to.</summary>
+	public int BranchId { get; set; }
+
+	/// <summary>Whether all enemies in this room have been defeated.</summary>
+	public bool IsCleared { get; private set; }
+
+	/// <summary>Whether the player has entered this room at least once.</summary>
+	public bool IsVisited { get; set; }
+
+	/// <summary>The archetype of this room (Combat, Shrine, Material, etc.).</summary>
+	public RoomArchetype Archetype { get; set; }
+
+	// ─────────────────────────────────────────────
+	//  Runtime State
+	// ─────────────────────────────────────────────
+
+	/// <summary>Current number of alive enemies in this room.</summary>
+	private int _aliveEnemyCount = 0;
+
+	/// <summary>
+	/// Maps cardinal directions to their connection point markers.
+	/// Used for room transitions (player moves North/South/East/West to adjacent rooms).
+	/// </summary>
+	private Dictionary<Direction, Node2D> _connectionPoints = new();
+
+	/// <summary>
+	/// Array of SequenceDoor nodes in this room, if any.
+	/// These are gated doors that separate branches or cross-connections.
+	/// </summary>
+	private Node[] _sequenceDoors = new Node[0];
+
+	/// <summary>
+	/// Node containing all enemy spawn points (for visual debugging or configurability).
+	/// </summary>
+	private Node? _enemySpawnPoints;
+
+	/// <summary>
+	/// Node containing all material pickup nodes (loot, materials, etc.).
+	/// </summary>
+	private Node? _materialNodes;
+
+	/// <summary>The tilemap visual for this room.</summary>
+	private TileMap? _tilemap;
+
+	// ═══════════════════════════════════════════════════════════════════════════════════
+	//  Godot Lifecycle
+	// ═══════════════════════════════════════════════════════════════════════════════════
+
+	public override void _Ready()
+	{
+		// Mark as visited on first room load
+		IsVisited = true;
+
+		// Cache child nodes
+		CacheChildNodes();
+
+		// Connect to enemy death signal
+		if (SignalBus.Instance != null)
+		{
+			SignalBus.Instance.EntityDied += OnEnemyDied;
+		}
+
+		// Count initial enemies in the room
+		CountEnemies();
+	}
+
+	public override void _ExitTree()
+	{
+		// Disconnect from signals
+		if (SignalBus.Instance != null)
+		{
+			SignalBus.Instance.EntityDied -= OnEnemyDied;
+		}
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════════════
+	//  Initialization & Caching
+	// ═══════════════════════════════════════════════════════════════════════════════════
+
+	/// <summary>
+	/// Cache references to child nodes by standard naming conventions.
+	/// Expects children named: ConnectionPoints, SequenceDoors[], EnemySpawnPoints[], MaterialNodes, Tilemap.
+	/// </summary>
+	private void CacheChildNodes()
+	{
+		// Cache connection points (N/S/E/W markers)
+		var connectionPointsNode = GetNodeOrNull("ConnectionPoints");
+		if (connectionPointsNode != null)
+		{
+			foreach (Node child in connectionPointsNode.GetChildren())
+			{
+				if (child is Node2D marker && Direction.TryParse(child.Name, ignoreCase: true, out Direction dir))
+				{
+					_connectionPoints[dir] = marker;
+				}
+			}
+		}
+
+		// Cache sequence doors by finding all nodes with the "SequenceDoor" script
+		var sequenceDoors = new List<Node>();
+		CollectSequenceDoors(this, sequenceDoors);
+		_sequenceDoors = sequenceDoors.ToArray();
+
+		// Cache child containers
+		_enemySpawnPoints = GetNodeOrNull("EnemySpawnPoints");
+		_materialNodes = GetNodeOrNull("MaterialNodes");
+		_tilemap = GetNodeOrNull<TileMap>("Tilemap");
+	}
+
+	/// <summary>
+	/// Recursively collect all nodes with the SequenceDoor script attached.
+	/// </summary>
+	private void CollectSequenceDoors(Node parent, List<Node> result)
+	{
+		foreach (Node child in parent.GetChildren())
+		{
+			// Simple heuristic: if the node name contains "Door" or has specific properties
+			// In future, could check for Script("SequenceDoor.cs")
+			if (child.Name.ToString().Contains("Door", System.StringComparison.OrdinalIgnoreCase))
+			{
+				result.Add(child);
+			}
+
+			CollectSequenceDoors(child, result);
+		}
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════════════
+	//  Public API — Connection Points
+	// ═══════════════════════════════════════════════════════════════════════════════════
+
+	/// <summary>
+	/// Get the world position of a connection point in a given direction.
+	/// Used to position the player when they transition into this room from an adjacent room.
+	/// </summary>
+	/// <param name="direction">The cardinal direction (North/South/East/West).</param>
+	/// <returns>The global position of the connection point, or Vector2.Zero if not found.</returns>
+	public Vector2 GetConnectionPointPosition(Direction direction)
+	{
+		if (_connectionPoints.TryGetValue(direction, out Node2D marker))
+		{
+			return marker.GlobalPosition;
+		}
+
+		GD.PrintErr($"[RoomInstance] No connection point found for direction {direction}");
+		return GlobalPosition; // Fallback to room center
+	}
+
+	/// <summary>
+	/// Get all defined connection point directions for this room.
+	/// </summary>
+	public IEnumerable<Direction> GetConnectionPointDirections()
+	{
+		return _connectionPoints.Keys;
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════════════
+	//  Enemy Tracking & Room Completion
+	// ═══════════════════════════════════════════════════════════════════════════════════
+
+	/// <summary>
+	/// Count the number of alive enemies currently in this room.
+	/// Called at initialization and after each enemy dies.
+	/// Enemies are identified as children under EnemyContainer or direct children of World
+	/// that are not the player.
+	/// </summary>
+	private void CountEnemies()
+	{
+		if (Archetype == RoomArchetype.Material || Archetype == RoomArchetype.Lore || 
+		    Archetype == RoomArchetype.SequenceShrine || Archetype == RoomArchetype.BossAntechamber)
+		{
+			// These room types don't have enemies
+			_aliveEnemyCount = 0;
+			return;
+		}
+
+		// Count enemies in EnemyContainer if it exists at a higher scope
+		_aliveEnemyCount = 0;
+		
+		// For now, we'll rely on the enemy death signal to decrement the count.
+		// This method will be called once at _Ready() to establish the initial count.
+		// In a full implementation, we'd query the actual enemy nodes from RunManager.
+	}
+
+	/// <summary>
+	/// Called by the signal bus when an entity dies.
+	/// Checks if it was an enemy in this room and decrements the counter.
+	/// If all enemies are defeated, marks the room as cleared and emits the signal.
+	/// </summary>
+	private void OnEnemyDied(Node entity, Node? source)
+	{
+		// Simple heuristic: if the entity is not the player and it's in this room's tree
+		if (entity == null || entity is CharacterBody2D)
+		{
+			// Check if it's not the player
+			var runManager = RunManager.Instance;
+			if (runManager?.Player == entity)
+			{
+				// This was the player dying, not an enemy
+				return;
+			}
+
+			// Check if the entity is a descendant of this room
+			if (entity.IsAncestorOf(this) || this.IsAncestorOf(entity))
+			{
+				_aliveEnemyCount = Mathf.Max(0, _aliveEnemyCount - 1);
+
+				// If all enemies are dead, mark the room as cleared
+				if (_aliveEnemyCount <= 0 && !IsCleared)
+				{
+					MarkRoomAsCleared();
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Mark this room as cleared and emit the RoomCleared signal via SignalBus.
+	/// </summary>
+	private void MarkRoomAsCleared()
+	{
+		if (IsCleared)
+		{
+			return; // Already cleared
+		}
+
+		IsCleared = true;
+
+		// Notify the world that this room is cleared
+		if (SignalBus.Instance != null)
+		{
+			SignalBus.Instance.PublishRoomCleared(RoomId);
+			GD.Print($"[RoomInstance] Room {RoomId} ({Archetype}) cleared!");
+		}
+
+		// TODO: Disable/hide enemy spawn points, trigger visual celebration, unlock doors, etc.
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════════════
+	//  Enemy Spawning
+	// ═══════════════════════════════════════════════════════════════════════════════════
+
+	/// <summary>
+	/// Spawn enemies at each spawn point in this room based on archetype.
+	/// Rooms that don't support enemies are skipped.
+	/// </summary>
+	public void SpawnEnemies()
+	{
+		// Skip non-combat rooms
+		if (Archetype == RoomArchetype.Material || Archetype == RoomArchetype.Lore ||
+		    Archetype == RoomArchetype.SequenceShrine || Archetype == RoomArchetype.BossAntechamber)
+		{
+			return;
+		}
+
+		if (_enemySpawnPoints == null || _enemySpawnPoints.GetChildCount() == 0)
+		{
+			GD.Print($"[RoomInstance] No enemy spawn points defined for room {RoomId}");
+			return;
+		}
+
+		// Determine how many enemies to spawn based on archetype
+		int enemyCount = Archetype switch
+		{
+			RoomArchetype.Combat => 2 + GD.Randi() % 3, // 2-4 enemies
+			RoomArchetype.BossRoom => 1, // Single boss
+			_ => 0,
+		};
+
+		// Load the enemy template
+		var enemyScene = GD.Load<PackedScene>("res://Entities/Enemies/Enemy.tscn");
+		if (enemyScene == null)
+		{
+			GD.PrintErr("[RoomInstance] Failed to load enemy template scene");
+			return;
+		}
+
+		// Get EnemyContainer from RunManager's CurrentWorld
+		var runManager = RunManager.Instance;
+		if (runManager?.CurrentWorld == null)
+		{
+			GD.PrintErr("[RoomInstance] Cannot find EnemyContainer - RunManager or CurrentWorld is null");
+			return;
+		}
+
+		var enemyContainer = runManager.CurrentWorld.FindChild("EnemyContainer", recursive: false, owned: false) as Node2D;
+		if (enemyContainer == null)
+		{
+			GD.PrintErr("[RoomInstance] Cannot find EnemyContainer in CurrentWorld");
+			return;
+		}
+
+		// Spawn enemies at each designated spawn point
+		for (int i = 0; i < Mathf.Min(enemyCount, _enemySpawnPoints.GetChildCount()); i++)
+		{
+			var spawnPoint = _enemySpawnPoints.GetChild<Node2D>(i);
+			if (spawnPoint == null)
+			{
+				continue;
+			}
+
+			// Instantiate enemy
+			var enemy = enemyScene.Instantiate<CharacterBody2D>();
+			if (enemy == null)
+			{
+				GD.PrintErr("[RoomInstance] Failed to instantiate enemy");
+				continue;
+			}
+
+			// Position at spawn point
+			enemy.GlobalPosition = spawnPoint.GlobalPosition;
+
+			// Add to world
+			enemyContainer.AddChild(enemy);
+
+			_aliveEnemyCount++;
+
+			GD.Print($"[RoomInstance] Spawned enemy at {spawnPoint.GlobalPosition}");
+		}
+
+		GD.Print($"[RoomInstance] Spawned {_aliveEnemyCount} enemies for room {RoomId}");
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════════════
+	//  Utility
+	// ═══════════════════════════════════════════════════════════════════════════════════
+
+	public override string ToString()
+	{
+		return $"RoomInstance(ID={RoomId}, Branch={BranchId}, Archetype={Archetype}, Cleared={IsCleared}, Visited={IsVisited})";
+	}
+}

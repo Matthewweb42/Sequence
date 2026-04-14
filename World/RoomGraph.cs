@@ -771,6 +771,25 @@ public partial class RoomGraph : Node
         return result;
     }
 
+    /// <summary>
+    /// Finds the adjacent room in a given direction from the specified room.
+    /// Uses the grid layout to locate neighbors.
+    /// </summary>
+    /// <param name="roomId">The starting room ID.</param>
+    /// <param name="direction">The cardinal direction to search.</param>
+    /// <returns>The adjacent RoomNode, or null if none exists in that direction.</returns>
+    public RoomNode? GetAdjacentRoomInDirection(int roomId, Direction direction)
+    {
+        if (!_rooms.TryGetValue(roomId, out RoomNode? room) || room == null)
+        {
+            return null;
+        }
+
+        Vector2I adjacentPos = room.GridPosition + DirectionToOffset(direction);
+        _grid.TryGetValue(adjacentPos, out RoomNode? adjacentRoom);
+        return adjacentRoom;
+    }
+
     // ═══════════════════════════════════════════
     //  Signal Handlers
     // ═══════════════════════════════════════════
