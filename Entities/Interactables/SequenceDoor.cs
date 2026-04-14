@@ -1,4 +1,5 @@
 using Godot;
+using Sequence.Autoloads;
 
 namespace Sequence.Entities.Interactables;
 

@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using Sequence.Autoloads;
 
 namespace Sequence.World;
 
@@ -59,7 +60,7 @@ public partial class RoomInstance : Node2D
 	private Node? _materialNodes;
 
 	/// <summary>The tilemap visual for this room.</summary>
-	private TileMap? _tilemap;
+	private TileMapLayer? _tilemap;
 
 	// ═══════════════════════════════════════════════════════════════════════════════════
 	//  Godot Lifecycle
@@ -123,7 +124,7 @@ public partial class RoomInstance : Node2D
 		// Cache child containers
 		_enemySpawnPoints = GetNodeOrNull("EnemySpawnPoints");
 		_materialNodes = GetNodeOrNull("MaterialNodes");
-		_tilemap = GetNodeOrNull<TileMap>("Tilemap");
+		_tilemap = GetNodeOrNull<TileMapLayer>("Tilemap");
 	}
 
 	/// <summary>
@@ -281,7 +282,7 @@ public partial class RoomInstance : Node2D
 		// Determine how many enemies to spawn based on archetype
 		int enemyCount = Archetype switch
 		{
-			RoomArchetype.Combat => 2 + GD.Randi() % 3, // 2-4 enemies
+			RoomArchetype.Combat => 2 + (int)(GD.Randi() % 3), // 2-4 enemies
 			RoomArchetype.BossRoom => 1, // Single boss
 			_ => 0,
 		};

@@ -164,15 +164,17 @@ public partial class RunManager : Node
 		}
 
 		// Position the player at the entry point
-		if (entryDirection.HasValue)
+		if (Player is Node2D player2D)
 		{
-			Vector2 entryPos = newRoom.GetConnectionPointPosition(entryDirection.Value);
-			Player.GlobalPosition = entryPos;
-		}
-		else
-		{
-			// Default: position at room center
-			Player.GlobalPosition = newRoom.GlobalPosition;
+			if (entryDirection.HasValue)
+			{
+				player2D.GlobalPosition = newRoom.GetConnectionPointPosition(entryDirection.Value);
+			}
+			else
+			{
+				// Default: position at room center
+				player2D.GlobalPosition = newRoom.GlobalPosition;
+			}
 		}
 
 		// Mark room as visited
