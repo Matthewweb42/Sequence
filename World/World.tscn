@@ -1,8 +1,12 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://World/RoomGraph.cs" id="1_57qx7"]
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_3d6ty"]
 [ext_resource type="PackedScene" path="res://UI/HUD/HUD.tscn" id="5_s3w8q"]
+[ext_resource type="PackedScene" path="res://Entities/Enemies/GoblinEnemy.tscn" id="6_gob"]
+[ext_resource type="PackedScene" path="res://Entities/Enemies/SkeletonEnemy.tscn" id="7_skel"]
+[ext_resource type="PackedScene" path="res://Entities/Enemies/MushroomEnemy.tscn" id="8_mush"]
+[ext_resource type="PackedScene" path="res://Entities/Enemies/FlyingEyeEnemy.tscn" id="9_eye"]
 
 [node name="World" type="Node2D"]
 
@@ -13,6 +17,23 @@
 [node name="Player" parent="." instance=ExtResource("2_3d6ty")]
 position = Vector2(0, 0)
 
+[node name="Camera2D" type="Camera2D" parent="Player"]
+zoom = Vector2(4, 4)
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
 [node name="EnemyContainer" type="Node2D" parent="."]
+
+[node name="Goblin" parent="EnemyContainer" instance=ExtResource("6_gob")]
+position = Vector2(120, 0)
+
+[node name="Skeleton" parent="EnemyContainer" instance=ExtResource("7_skel")]
+position = Vector2(-120, 0)
+
+[node name="Mushroom" parent="EnemyContainer" instance=ExtResource("8_mush")]
+position = Vector2(0, 100)
+
+[node name="FlyingEye" parent="EnemyContainer" instance=ExtResource("9_eye")]
+position = Vector2(0, -100)
 
 [node name="HUD" parent="." instance=ExtResource("5_s3w8q")]
