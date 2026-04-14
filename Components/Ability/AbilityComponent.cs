@@ -46,6 +46,11 @@ public partial class AbilityComponent : Node
 		}
 	}
 
+	public bool IsUnlocked(string abilityId)
+	{
+		return !string.IsNullOrWhiteSpace(abilityId) && _unlockedAbilities.Contains(abilityId);
+	}
+
 	public bool TryActivate(string abilityId, float cooldownSeconds = -1f, float sanityCost = -1f)
 	{
 		if (string.IsNullOrWhiteSpace(abilityId))

@@ -2,11 +2,13 @@ using Godot;
 using System.Collections.Generic;
 using Sequence.Components.Combat;
 using Sequence.Components.Hurtbox;
+using Sequence.Components.Status;
 
 namespace Sequence.Components.Hitbox;
 
 /// <summary>
 /// Outgoing attack collider that applies damage to hurtboxes during active windows.
+/// Optionally applies a status effect to targets on hit.
 /// </summary>
 public partial class HitboxComponent : Area2D
 {
@@ -16,6 +18,12 @@ public partial class HitboxComponent : Area2D
 	[Export(PropertyHint.Range, "0,10000,0.1")] public float Damage { get; set; } = 10f;
 	[Export] public CombatTeam Team { get; set; } = CombatTeam.Enemy;
 	[Export] public bool ActiveOnReady { get; set; }
+
+	/// <summary>
+	/// If set, applies this status effect ID to the target's StatusEffectComponent on a successful hit.
+	/// </summary>
+	[Export] public string StatusEffectOnHit { get; set; } = string.Empty;
+	[Export(PropertyHint.Range, "0,60,0.1")] public float StatusDurationSeconds { get; set; } = 3f;
 
 	private readonly HashSet<ulong> _hitTargetsThisWindow = new();
 
@@ -83,7 +91,15 @@ public partial class HitboxComponent : Area2D
 		}
 
 		_hitTargetsThisWindow.Add(targetId);
-		hurtbox.ReceiveHit(this);
+
+		var hit = hurtbox.ReceiveHit(this);
+
+		if (hit && !string.IsNullOrEmpty(StatusEffectOnHit))
+		{
+			var target = hurtbox.GetParent();
+			var statusComp = target?.GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
+			statusComp?.ApplyEffect(StatusEffectOnHit, StatusDurationSeconds,
+				tags: new[] { StatusEffectOnHit, "debuff" });
+		}
 	}
 }
-

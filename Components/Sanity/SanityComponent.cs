@@ -57,5 +57,12 @@ public partial class SanityComponent : Node
 
 		return true;
 	}
+
+	public void Restore(float amount)
+	{
+		if (amount <= 0f) return;
+		CurrentSanity = Mathf.Clamp(CurrentSanity + amount, 0f, MaxSanity);
+		EmitSignal(SignalName.SanityChanged, CurrentSanity, MaxSanity);
+	}
 }
 

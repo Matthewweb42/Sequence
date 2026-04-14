@@ -4,6 +4,7 @@ using Sequence.Components.Drop;
 using Sequence.Components.Health;
 using Sequence.Components.Hitbox;
 using Sequence.Components.StateMachine;
+using Sequence.Components.Status;
 
 namespace Sequence.Entities.Enemies;
 
@@ -29,17 +30,21 @@ public partial class EnemyBase : CharacterBody2D
 	private HitboxComponent? _hitbox;
 	private DropComponent? _drop;
 	private StateMachineComponent? _fsm;
+	private StatusEffectComponent? _status;
 	private float _attackCooldownRemaining;
 	private float _attackWindupRemaining;
 	private float _attackActiveRemaining;
 
 	public override void _Ready()
 	{
+		AddToGroup("enemies");
+
 		_aggro = ResolveNode<AggroComponent>(AggroPath, "AggroComponent");
 		_health = ResolveNode<HealthComponent>(HealthPath, "HealthComponent");
 		_hitbox = ResolveNode<HitboxComponent>(HitboxPath, "HitboxComponent");
 		_drop = ResolveNode<DropComponent>(DropPath, "DropComponent");
 		_fsm = ResolveNode<StateMachineComponent>(StateMachinePath, "StateMachineComponent");
+		_status = GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
 
 		RegisterDefaultStates();
 
@@ -57,6 +62,11 @@ public partial class EnemyBase : CharacterBody2D
 		if (_drop != null)
 		{
 			_drop.DropRequested += OnDropRequested;
+		}
+
+		if (_status != null)
+		{
+			_status.EffectRemoved += OnStatusEffectRemoved;
 		}
 	}
 
@@ -77,6 +87,11 @@ public partial class EnemyBase : CharacterBody2D
 		{
 			_drop.DropRequested -= OnDropRequested;
 		}
+
+		if (_status != null)
+		{
+			_status.EffectRemoved -= OnStatusEffectRemoved;
+		}
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -85,6 +100,14 @@ public partial class EnemyBase : CharacterBody2D
 		TickAttackTimers(step);
 
 		if (_health != null && _health.IsDead)
+		{
+			Velocity = Vector2.Zero;
+			MoveAndSlide();
+			return;
+		}
+
+		// Contract bound: cannot move or attack
+		if (_status != null && _status.HasTag("contract_bound"))
 		{
 			Velocity = Vector2.Zero;
 			MoveAndSlide();
@@ -109,6 +132,13 @@ public partial class EnemyBase : CharacterBody2D
 			default:
 				Velocity = Vector2.Zero;
 				break;
+		}
+
+		// Blind: randomize movement direction
+		if (_status != null && _status.HasTag("blind") && Velocity != Vector2.Zero)
+		{
+			var randomAngle = GD.Randf() * Mathf.Tau;
+			Velocity = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)) * Velocity.Length();
 		}
 
 		MoveAndSlide();
@@ -147,6 +177,15 @@ public partial class EnemyBase : CharacterBody2D
 	private void OnDropRequested(Node ownerEntity, Vector2 worldPosition)
 	{
 		SpawnMaterialPickup(worldPosition);
+	}
+
+	private void OnStatusEffectRemoved(string effectId)
+	{
+		// Contract broken: deal holy breach damage
+		if (effectId == "contract_bound" && _health != null && !_health.IsDead)
+		{
+			_health.TakeDamage(20f, null);
+		}
 	}
 
 	private void UpdateChase(Node2D? target)
@@ -259,4 +298,3 @@ public partial class EnemyBase : CharacterBody2D
 		}
 	}
 }
-

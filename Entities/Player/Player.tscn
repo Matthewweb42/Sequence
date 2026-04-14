@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
 [ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_g5wqj"]
@@ -9,6 +9,12 @@
 [ext_resource type="Script" path="res://Components/Inventory/InventoryComponent.cs" id="7_m9p2h"]
 [ext_resource type="Script" path="res://Components/Ability/AbilityComponent.cs" id="8_j4f0r"]
 [ext_resource type="Script" path="res://Components/Pathway/PathwayComponent.cs" id="9_v7d3k"]
+[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="10_s2t4u"]
+[ext_resource type="Script" path="res://Components/Ability/ChannelComponent.cs" id="11_c3h5v"]
+[ext_resource type="Script" path="res://Entities/Player/BardAbilityHandler.cs" id="12_b6p7w"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/SunshineBurstProjectile.tscn" id="13_sun1a"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/PureWhiteRayProjectile.tscn" id="14_ray2b"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/LightPillar.tscn" id="15_pil3c"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -18,6 +24,9 @@ size = Vector2(16, 22)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
 radius = 16.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_aoe"]
+radius = 200.0
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_k2mn4")
@@ -61,12 +70,36 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
 shape = SubResource("CircleShape2D_hitbox")
 
+[node name="AoEHitboxComponent" type="Area2D" parent="." script=ExtResource("4_u2c8v")]
+Team = 1
+collision_layer = 4
+collision_mask = 2
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AoEHitboxComponent"]
+shape = SubResource("CircleShape2D_aoe")
+
 [node name="SequenceComponent" type="Node" parent="." script=ExtResource("6_e8q1c")]
 
 [node name="InventoryComponent" type="Node" parent="." script=ExtResource("7_m9p2h")]
 
 [node name="AbilityComponent" type="Node" parent="." script=ExtResource("8_j4f0r")]
 
+[node name="StatusEffectComponent" type="Node" parent="." script=ExtResource("10_s2t4u")]
+
+[node name="ChannelComponent" type="Node" parent="." script=ExtResource("11_c3h5v")]
+HurtboxPath = NodePath("../HurtboxComponent")
+
 [node name="PathwayComponent" type="Node" parent="." script=ExtResource("9_v7d3k")]
+PathwayId = "bard"
 AbilityPath = NodePath("../AbilityComponent")
-StartingAbilityIds = PackedStringArray("basic_attack")
+StartingAbilityIds = PackedStringArray("basic_attack", "bardic_song", "dispel_fear", "spiritual_recovery_hymn")
+SequenceUnlockLevels = PackedInt32Array(8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 6, 5, 5, 5, 5)
+SequenceUnlockAbilityIds = PackedStringArray("sun_eyes", "sunshine_burst", "blinding_flash", "holy_water_ritual", "physical_fortification", "horror_immunity", "theurgical_purification", "light_of_holiness", "truth_seal", "contract_binding", "notarized_enhancement", "light_of_holiness_ascended", "solar_oath", "pure_white_ray", "night_vision_permanent")
+
+[node name="BardAbilityHandler" type="Node" parent="." script=ExtResource("12_b6p7w")]
+AoEHitboxPath = NodePath("../AoEHitboxComponent")
+SunshineBurstScene = ExtResource("13_sun1a")
+PureWhiteRayScene = ExtResource("14_ray2b")
+LightPillarScene = ExtResource("15_pil3c")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
 [ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_d9k6q"]
@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://Components/Aggro/AggroComponent.cs" id="6_r7c3w"]
 [ext_resource type="Script" path="res://Components/Drop/DropComponent.cs" id="7_h1n5m"]
 [ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="8_w2r5y"]
+[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="9_e1f2g"]
+[ext_resource type="Script" path="res://Components/Combat/EntityTagComponent.cs" id="10_h3i4j"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -74,3 +76,7 @@ collision_mask = 16
 shape = SubResource("CircleShape2D_aggro")
 
 [node name="DropComponent" type="Node" parent="." script=ExtResource("7_h1n5m")]
+
+[node name="StatusEffectComponent" type="Node" parent="." script=ExtResource("9_e1f2g")]
+
+[node name="EntityTagComponent" type="Node" parent="." script=ExtResource("10_h3i4j")]

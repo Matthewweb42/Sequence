@@ -3,6 +3,7 @@ using Sequence.Autoloads;
 using Sequence.Components.Ability;
 using Sequence.Components.Health;
 using Sequence.Components.Hitbox;
+using Sequence.Components.Status;
 
 namespace Sequence.Entities.Player;
 
@@ -21,6 +22,7 @@ public partial class PlayerController : CharacterBody2D
 	private HealthComponent? _health;
 	private HitboxComponent? _hitbox;
 	private AbilityComponent? _ability;
+	private StatusEffectComponent? _status;
 	private float _attackWindowRemaining;
 	private bool _attackWasPressed;
 
@@ -29,6 +31,7 @@ public partial class PlayerController : CharacterBody2D
 		_health = ResolveNode<HealthComponent>(HealthPath, "HealthComponent");
 		_hitbox = ResolveNode<HitboxComponent>(HitboxPath, "HitboxComponent");
 		_ability = ResolveNode<AbilityComponent>(AbilityPath, "AbilityComponent");
+		_status = GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
 
 		if (_health != null)
 		{
@@ -68,7 +71,11 @@ public partial class PlayerController : CharacterBody2D
 		{
 			moveInput = GetKeyboardMoveFallback();
 		}
-		Velocity = moveInput * MoveSpeed;
+
+		var effectiveMoveSpeed = _status != null
+			? _status.GetStat("move_speed", MoveSpeed)
+			: MoveSpeed;
+		Velocity = moveInput * effectiveMoveSpeed;
 		MoveAndSlide();
 
 		var attackPressed = Input.IsActionPressed("attack") || Input.IsKeyPressed(Key.Space);
@@ -80,7 +87,8 @@ public partial class PlayerController : CharacterBody2D
 			if (_ability == null || _ability.TryActivate("basic_attack", sanityCost: BasicAttackSanityCost))
 			{
 				_hitbox?.ActivateWindow();
-				_attackWindowRemaining = AttackWindowSeconds;
+				var atkSpeedMult = _status != null ? _status.GetStat("attack_speed_multiplier", 1f) : 1f;
+				_attackWindowRemaining = AttackWindowSeconds / Mathf.Max(0.1f, atkSpeedMult);
 			}
 		}
 	}
@@ -127,4 +135,3 @@ public partial class PlayerController : CharacterBody2D
 		return v == Vector2.Zero ? Vector2.Zero : v.Normalized();
 	}
 }
-
