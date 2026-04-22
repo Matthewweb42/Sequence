@@ -163,6 +163,11 @@ public partial class RunManager : Node
 			roomContainer.AddChild(newRoom);
 		}
 
+		// Disable connection points that lead nowhere, so the player can't walk
+		// into a dead wall. Must happen after RoomId is assigned and the room is
+		// in the tree so its child nodes are ready.
+		newRoom.ConfigureConnectionPoints(RoomGraph);
+
 		// Position the player at the entry point
 		if (Player is Node2D player2D)
 		{
@@ -181,7 +186,7 @@ public partial class RunManager : Node
 		newRoom.IsVisited = true;
 
 		// Spawn enemies if room is not yet cleared
-		if (!newRoom.IsCleared && newRoom.Archetype != RoomArchetype.Material && newRoom.Archetype != RoomArchetype.Lore &&
+		if (!newRoom.IsCleared && newRoom.Archetype != RoomArchetype.Material && newRoom.Archetype != RoomArchetype.Healing &&
 		    newRoom.Archetype != RoomArchetype.SequenceShrine && newRoom.Archetype != RoomArchetype.BossAntechamber)
 		{
 			newRoom.SpawnEnemies();
@@ -206,8 +211,8 @@ public partial class RunManager : Node
 			RoomArchetype.Combat => "res://World/Rooms/CombatRoom.tscn",
 			RoomArchetype.SequenceShrine => "res://World/Rooms/SequenceShrineRoom.tscn",
 			RoomArchetype.Material => "res://World/Rooms/MaterialRoom.tscn",
-			RoomArchetype.Lore => "res://World/Rooms/MaterialRoom.tscn", // Placeholder: same as Material
-			RoomArchetype.BossAntechamber => "res://World/Rooms/CombatRoom.tscn", // Placeholder
+			RoomArchetype.Healing => "res://World/Rooms/HealingRoom.tscn",
+			RoomArchetype.BossAntechamber => "res://World/Rooms/BossAntechamberRoom.tscn",
 			RoomArchetype.BossRoom => "res://World/Rooms/BossRoom.tscn",
 			RoomArchetype.Hidden => "res://World/Rooms/MaterialRoom.tscn", // Placeholder
 			_ => null,

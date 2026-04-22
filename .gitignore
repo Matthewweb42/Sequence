@@ -1,6 +1,7 @@
 # Godot
 .godot/
 .import/
+*.import
 export.cfg
 export_credentials.cfg
 *.tmp

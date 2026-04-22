@@ -82,6 +82,9 @@ public partial class RoomInstance : Node2D
 
 		// Count initial enemies in the room
 		CountEnemies();
+
+		// NOTE: ConfigureConnectionPoints is called by RunManager.TransitionToRoom
+		// after the room is in the tree, since it needs the RoomGraph reference.
 	}
 
 	public override void _ExitTree()
@@ -174,6 +177,69 @@ public partial class RoomInstance : Node2D
 		return _connectionPoints.Keys;
 	}
 
+	/// <summary>
+	/// Called by RunManager after this room is loaded and its RoomId is assigned.
+	/// Queries the RoomGraph to determine which directions have actual neighbours
+	/// and disables any ConnectionPoint that leads nowhere so the player cannot
+	/// accidentally trigger a transition into a dead wall.
+	///
+	/// Optionally shows a "BlockedMarkers/{dir}" child node (if authored in the
+	/// scene) to give the player a visible wall/indicator in that direction.
+	/// </summary>
+	/// <param name="roomGraph">The active RoomGraph for this run.</param>
+	public void ConfigureConnectionPoints(RoomGraph roomGraph)
+	{
+		var blockedMarkersNode = GetNodeOrNull("BlockedMarkers");
+
+		foreach (Direction dir in System.Enum.GetValues(typeof(Direction)))
+		{
+			bool hasNeighbour = roomGraph.GetAdjacentRoomInDirection(RoomId, dir) != null;
+
+			// ── ConnectionPoint Area2D ──────────────────────────────────────
+			if (_connectionPoints.TryGetValue(dir, out Node2D? cpNode) && cpNode is Area2D cpArea)
+			{
+				if (hasNeighbour)
+				{
+					// Enable monitoring and its collision shape so transitions work.
+					cpArea.Monitoring = true;
+					SetCollisionShapeDisabled(cpArea, disabled: false);
+				}
+				else
+				{
+					// Disable monitoring and collision — player cannot enter a dead end.
+					cpArea.Monitoring = false;
+					SetCollisionShapeDisabled(cpArea, disabled: true);
+					GD.Print($"[RoomInstance] Room {RoomId}: no neighbour {dir} — connection point disabled.");
+				}
+			}
+
+			// ── BlockedMarker (optional visual authored in scene) ───────────
+			if (blockedMarkersNode != null)
+			{
+				var marker = blockedMarkersNode.GetNodeOrNull<Node2D>(dir.ToString());
+				if (marker != null)
+				{
+					marker.Visible = !hasNeighbour;
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Enables or disables the first CollisionShape2D child of the given Area2D.
+	/// Safe to call even if the Area2D has no collision shape yet.
+	/// </summary>
+	/// <param name="area">The Area2D whose collision shape to toggle.</param>
+	/// <param name="disabled">True to disable (no physics); false to enable.</param>
+	private static void SetCollisionShapeDisabled(Area2D area, bool disabled)
+	{
+		var shape = area.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		if (shape != null)
+		{
+			shape.Disabled = disabled;
+		}
+	}
+
 	// ═══════════════════════════════════════════════════════════════════════════════════
 	//  Enemy Tracking & Room Completion
 	// ═══════════════════════════════════════════════════════════════════════════════════
@@ -186,7 +252,7 @@ public partial class RoomInstance : Node2D
 	/// </summary>
 	private void CountEnemies()
 	{
-		if (Archetype == RoomArchetype.Material || Archetype == RoomArchetype.Lore || 
+		if (Archetype == RoomArchetype.Material || Archetype == RoomArchetype.Healing || 
 		    Archetype == RoomArchetype.SequenceShrine || Archetype == RoomArchetype.BossAntechamber)
 		{
 			// These room types don't have enemies
@@ -267,7 +333,7 @@ public partial class RoomInstance : Node2D
 	public void SpawnEnemies()
 	{
 		// Skip non-combat rooms
-		if (Archetype == RoomArchetype.Material || Archetype == RoomArchetype.Lore ||
+		if (Archetype == RoomArchetype.Material || Archetype == RoomArchetype.Healing ||
 		    Archetype == RoomArchetype.SequenceShrine || Archetype == RoomArchetype.BossAntechamber)
 		{
 			return;

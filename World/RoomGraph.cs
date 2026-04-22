@@ -27,7 +27,7 @@ public enum RoomArchetype
     Combat,
     SequenceShrine,
     Material,
-    Lore,
+    Healing,
     BossAntechamber,
     BossRoom,
     Hidden
@@ -426,14 +426,14 @@ public partial class RoomGraph : Node
         }
 
         // Repeating schedule for middle rooms:
-        //   Combat → Material → Combat → Lore → Combat → ...
+        //   Combat → Material → Combat → Healing → Combat → ...
         int phase = (indexInBranch - 1) % 4;
         return phase switch
         {
             0 => RoomArchetype.Combat,
             1 => RoomArchetype.Material,
             2 => RoomArchetype.Combat,
-            3 => RoomArchetype.Lore,
+            3 => RoomArchetype.Healing,
             _ => RoomArchetype.Combat
         };
     }
