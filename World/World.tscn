@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://World/RoomGraph.cs" id="1_57qx7"]
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_3d6ty"]
@@ -8,6 +8,12 @@
 [ext_resource type="PackedScene" path="res://Entities/Enemies/MushroomEnemy.tscn" id="8_mush"]
 [ext_resource type="PackedScene" path="res://Entities/Enemies/FlyingEyeEnemy.tscn" id="9_eye"]
 
+[sub_resource type="RectangleShape2D" id="floor_shape"]
+size = Vector2(800, 20)
+
+[sub_resource type="RectangleShape2D" id="platform_shape"]
+size = Vector2(200, 16)
+
 [node name="World" type="Node2D"]
 
 [node name="RoomGraph" type="Node" parent="." script=ExtResource("1_57qx7")]
@@ -15,7 +21,7 @@
 [node name="RoomContainer" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_3d6ty")]
-position = Vector2(0, 0)
+position = Vector2(0, 80)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 zoom = Vector2(4, 4)
@@ -25,15 +31,39 @@ position_smoothing_speed = 8.0
 [node name="EnemyContainer" type="Node2D" parent="."]
 
 [node name="Goblin" parent="EnemyContainer" instance=ExtResource("6_gob")]
-position = Vector2(120, 0)
+position = Vector2(120, 80)
 
 [node name="Skeleton" parent="EnemyContainer" instance=ExtResource("7_skel")]
-position = Vector2(-120, 0)
+position = Vector2(-120, 80)
 
 [node name="Mushroom" parent="EnemyContainer" instance=ExtResource("8_mush")]
-position = Vector2(0, 100)
+position = Vector2(200, 80)
 
 [node name="FlyingEye" parent="EnemyContainer" instance=ExtResource("9_eye")]
-position = Vector2(0, -100)
+position = Vector2(-200, 80)
+
+[node name="TestFloor" type="StaticBody2D" parent="."]
+position = Vector2(0, 140)
+collision_layer = 256
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TestFloor"]
+shape = SubResource("floor_shape")
+
+[node name="Polygon2D" type="Polygon2D" parent="TestFloor"]
+polygon = PackedVector2Array(-400, -10, 400, -10, 400, 10, -400, 10)
+color = Color(0.3, 0.25, 0.2, 1.0)
+
+[node name="TestPlatform" type="StaticBody2D" parent="."]
+position = Vector2(-120, 60)
+collision_layer = 256
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TestPlatform"]
+shape = SubResource("platform_shape")
+
+[node name="Polygon2D" type="Polygon2D" parent="TestPlatform"]
+polygon = PackedVector2Array(-100, -8, 100, -8, 100, 8, -100, 8)
+color = Color(0.4, 0.35, 0.25, 1.0)
 
 [node name="HUD" parent="." instance=ExtResource("5_s3w8q")]

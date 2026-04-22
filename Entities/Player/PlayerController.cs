@@ -13,6 +13,7 @@ namespace Sequence.Entities.Player;
 public partial class PlayerController : CharacterBody2D
 {
 	[Export(PropertyHint.Range, "0,2000,1")] public float MoveSpeed { get; set; } = 220f;
+	[Export(PropertyHint.Range, "0,2000,1")] public float JumpVelocity { get; set; } = 480f;
 	[Export(PropertyHint.Range, "0.01,2,0.01")] public float AttackWindowSeconds { get; set; } = 0.12f;
 	[Export(PropertyHint.Range, "0,1000,0.1")] public float BasicAttackSanityCost { get; set; } = 5f;
 	[Export] public NodePath? HealthPath { get; set; }
@@ -66,19 +67,32 @@ public partial class PlayerController : CharacterBody2D
 			return;
 		}
 
-		var moveInput = Input.GetVector("move_left", "move_right", "move_up", "move_down");
-		if (moveInput == Vector2.Zero)
+		// Gravity
+		if (!IsOnFloor())
 		{
-			moveInput = GetKeyboardMoveFallback();
+			Velocity += GetGravity() * (float)delta;
+		}
+
+		// Jump
+		if (IsOnFloor() && Input.IsActionJustPressed("jump"))
+		{
+			Velocity = new Vector2(Velocity.X, -JumpVelocity);
+		}
+
+		// Horizontal movement only — vertical controlled by gravity/jump
+		var moveX = Input.GetAxis("move_left", "move_right");
+		if (moveX == 0f)
+		{
+			moveX = GetKeyboardMoveX();
 		}
 
 		var effectiveMoveSpeed = _status != null
 			? _status.GetStat("move_speed", MoveSpeed)
 			: MoveSpeed;
-		Velocity = moveInput * effectiveMoveSpeed;
+		Velocity = new Vector2(moveX * effectiveMoveSpeed, Velocity.Y);
 		MoveAndSlide();
 
-		var attackPressed = Input.IsActionPressed("attack") || Input.IsKeyPressed(Key.Space);
+		var attackPressed = Input.IsActionPressed("attack");
 		var attackJustPressed = attackPressed && !_attackWasPressed;
 		_attackWasPressed = attackPressed;
 
@@ -121,17 +135,11 @@ public partial class PlayerController : CharacterBody2D
 		return GetNodeOrNull<T>(fallbackName);
 	}
 
-	private Vector2 GetKeyboardMoveFallback()
+	private float GetKeyboardMoveX()
 	{
 		var x = 0f;
-		var y = 0f;
-
 		if (Input.IsKeyPressed(Key.A)) x -= 1f;
 		if (Input.IsKeyPressed(Key.D)) x += 1f;
-		if (Input.IsKeyPressed(Key.W)) y -= 1f;
-		if (Input.IsKeyPressed(Key.S)) y += 1f;
-
-		var v = new Vector2(x, y);
-		return v == Vector2.Zero ? Vector2.Zero : v.Normalized();
+		return x;
 	}
 }
