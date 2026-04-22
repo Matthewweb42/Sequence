@@ -1,0 +1,54 @@
+# Godot
+.godot/
+.import/
+export.cfg
+export_credentials.cfg
+*.tmp
+*.translation
+.mono/
+mono_crash.*.json
+data_*/
+
+# C# / .NET
+bin/
+obj/
+*.csproj.user
+*.sln.DotSettings.user
+*.userprefs
+
+# Visual Studio
+.vs/
+.vscode/
+*.sln.DotSettings
+.idea/
+*.swp
+*.swo
+
+# Rider
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Build
+/Builds/
+/Build/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor temp files
+*~
+*.swp
+*.swo
+*#
+.#*
+
+# Project-specific
+*.uid
