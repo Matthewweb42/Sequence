@@ -106,10 +106,16 @@ public partial class EnemyBase : CharacterBody2D
 			return;
 		}
 
+		// Gravity
+		if (!IsOnFloor())
+		{
+			Velocity += GetGravity() * step;
+		}
+
 		// Contract bound: cannot move or attack
 		if (_status != null && _status.HasTag("contract_bound"))
 		{
-			Velocity = Vector2.Zero;
+			Velocity = new Vector2(0f, Velocity.Y);
 			MoveAndSlide();
 			return;
 		}
@@ -123,22 +129,21 @@ public partial class EnemyBase : CharacterBody2D
 				UpdateChase(target);
 				break;
 			case "Attack":
-				Velocity = Vector2.Zero;
+				Velocity = new Vector2(0f, Velocity.Y);
 				break;
 			case "Death":
-				Velocity = Vector2.Zero;
+				Velocity = new Vector2(0f, Velocity.Y);
 				_hitbox?.DeactivateWindow();
 				break;
 			default:
-				Velocity = Vector2.Zero;
+				Velocity = new Vector2(0f, Velocity.Y);
 				break;
 		}
 
-		// Blind: randomize movement direction
-		if (_status != null && _status.HasTag("blind") && Velocity != Vector2.Zero)
+		// Blind: randomize horizontal movement direction
+		if (_status != null && _status.HasTag("blind") && Velocity.X != 0f)
 		{
-			var randomAngle = GD.Randf() * Mathf.Tau;
-			Velocity = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle)) * Velocity.Length();
+			Velocity = new Vector2(GD.Randf() * 2f - 1f, Velocity.Y).Normalized() * new Vector2(Velocity.X, 0f).Length();
 		}
 
 		MoveAndSlide();
@@ -198,11 +203,11 @@ public partial class EnemyBase : CharacterBody2D
 		}
 
 		var offset = target.GlobalPosition - GlobalPosition;
-		var distance = offset.Length();
+		var horizontalDistance = Mathf.Abs(offset.X);
 
-		if (distance <= AttackRange)
+		if (horizontalDistance <= AttackRange)
 		{
-			Velocity = Vector2.Zero;
+			Velocity = new Vector2(0f, Velocity.Y);
 			if (CanStartAttack())
 			{
 				StartAttack();
@@ -210,7 +215,8 @@ public partial class EnemyBase : CharacterBody2D
 			return;
 		}
 
-		Velocity = offset.Normalized() * MoveSpeed;
+		var dirX = Mathf.Sign(offset.X);
+		Velocity = new Vector2(dirX * MoveSpeed, Velocity.Y);
 	}
 
 	private bool CanStartAttack()

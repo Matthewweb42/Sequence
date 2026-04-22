@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sequence")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8ad021752a79006bd8e5bc0f87f48a7f2a645d7a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4e18c3f9e38416fea814fc96dfaa4c843cacf543")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sequence")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sequence")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

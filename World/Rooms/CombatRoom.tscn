@@ -12,7 +12,7 @@ size = Vector2(40, 40)
 [node name="CombatRoom" type="Node2D" script=ExtResource("1_roominstance")]
 position = Vector2(0, 0)
 
-[node name="Tilemap" type="TileMap" parent="."]
+[node name="Tilemap" type="TileMapLayer" parent="."]
 tile_set = SubResource("tileset_placeholder")
 format = 2
 
