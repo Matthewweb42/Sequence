@@ -1,7 +1,11 @@
-[gd_scene load_steps=3 format=4 uid="uid://bnu1ctsc1scb2"]
+[gd_scene load_steps=5 format=4 uid="uid://bnu1ctsc1scb2"]
 
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="1_p6yx7"]
 [ext_resource type="TileSet" uid="uid://b77ermaowapbw" path="res://Assets/tileset/tileset.tres" id="1_w2r4m"]
+[ext_resource type="Texture2D" uid="uid://c2slhv3e2i1o1" path="res://Assets/Tiny Swords/Tiny Swords/Terrain/Resources/Meat/Meat Resource/Meat Resource.png" id="2_iijir"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rrpsp"]
+size = Vector2(38, 33)
 
 [node name="MaterialRoom" type="Node2D"]
 
@@ -27,6 +31,13 @@ position = Vector2(-353, -39)
 position = Vector2(-2, -49)
 
 [node name="Sprite2D" type="Sprite2D" parent="MaterialNodes/MaterialNode1"]
+texture = ExtResource("2_iijir")
+
+[node name="Area2D" type="Area2D" parent="MaterialNodes/MaterialNode1"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MaterialNodes/MaterialNode1/Area2D"]
+position = Vector2(0, 2.5)
+shape = SubResource("RectangleShape2D_rrpsp")
 
 [node name="SequenceDoors" type="Node" parent="."]
 
