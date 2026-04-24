@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Coding\\Sequence\\World\\Tests\\Sequence.Tests.csproj": {}
+    "C:\\Users\\reece\\Documents\\Sequence\\World\\Tests\\Sequence.Tests.csproj": {}
   },
   "projects": {
-    "C:\\Coding\\Sequence\\Sequence.csproj": {
+    "C:\\Users\\reece\\Documents\\Sequence\\Sequence.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Coding\\Sequence\\Sequence.csproj",
+        "projectUniqueName": "C:\\Users\\reece\\Documents\\Sequence\\Sequence.csproj",
         "projectName": "Sequence",
-        "projectPath": "C:\\Coding\\Sequence\\Sequence.csproj",
-        "packagesPath": "C:\\Users\\webec\\.nuget\\packages\\",
-        "outputPath": "C:\\Coding\\Sequence\\.godot\\mono\\temp\\obj\\",
+        "projectPath": "C:\\Users\\reece\\Documents\\Sequence\\Sequence.csproj",
+        "packagesPath": "C:\\Users\\reece\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\reece\\Documents\\Sequence\\.godot\\mono\\temp\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\webec\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\reece\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -94,17 +94,17 @@
         }
       }
     },
-    "C:\\Coding\\Sequence\\World\\Tests\\Sequence.Tests.csproj": {
+    "C:\\Users\\reece\\Documents\\Sequence\\World\\Tests\\Sequence.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Coding\\Sequence\\World\\Tests\\Sequence.Tests.csproj",
+        "projectUniqueName": "C:\\Users\\reece\\Documents\\Sequence\\World\\Tests\\Sequence.Tests.csproj",
         "projectName": "Sequence.Tests",
-        "projectPath": "C:\\Coding\\Sequence\\World\\Tests\\Sequence.Tests.csproj",
-        "packagesPath": "C:\\Users\\webec\\.nuget\\packages\\",
-        "outputPath": "C:\\Coding\\Sequence\\World\\Tests\\obj\\",
+        "projectPath": "C:\\Users\\reece\\Documents\\Sequence\\World\\Tests\\Sequence.Tests.csproj",
+        "packagesPath": "C:\\Users\\reece\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\reece\\Documents\\Sequence\\World\\Tests\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\webec\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\reece\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -116,8 +116,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Coding\\Sequence\\Sequence.csproj": {
-                "projectPath": "C:\\Coding\\Sequence\\Sequence.csproj"
+              "C:\\Users\\reece\\Documents\\Sequence\\Sequence.csproj": {
+                "projectPath": "C:\\Users\\reece\\Documents\\Sequence\\Sequence.csproj"
               }
             }
           }

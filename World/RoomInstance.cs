@@ -207,16 +207,18 @@ public partial class RoomInstance : Node2D
 			{
 				if (hasNeighbour)
 				{
-					// Enable monitoring and its collision shape so transitions work.
+					// Show door and enable monitoring/collision so transitions work.
+					cpArea.Visible = true;
 					cpArea.Monitoring = true;
 					SetCollisionShapeDisabled(cpArea, disabled: false);
 				}
 				else
 				{
-					// Disable monitoring and collision — player cannot enter a dead end.
+					// Hide door and disable monitoring/collision — no passage in this direction.
+					cpArea.Visible = false;
 					cpArea.Monitoring = false;
 					SetCollisionShapeDisabled(cpArea, disabled: true);
-					GD.Print($"[RoomInstance] Room {RoomId}: no neighbour {dir} — connection point disabled.");
+					GD.Print($"[RoomInstance] Room {RoomId}: no neighbour {dir} — door hidden.");
 				}
 			}
 

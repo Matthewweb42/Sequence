@@ -153,11 +153,12 @@ public partial class RunManager : Node
 			return;
 		}
 
-		// Instantiate the room
-		RoomInstance? newRoom = roomScene.Instantiate<RoomInstance>();
-		if (newRoom == null)
+		// Instantiate the room (use safe cast — throws if script not attached to scene root)
+		Node rawRoom = roomScene.Instantiate();
+		if (rawRoom is not RoomInstance newRoom)
 		{
-			GD.PrintErr("[RunManager] TransitionToRoom: Failed to instantiate room scene");
+			GD.PrintErr($"[RunManager] TransitionToRoom: Room scene for {roomNode.Archetype} root is '{rawRoom.GetClass()}', not RoomInstance — missing script attachment.");
+			rawRoom.QueueFree();
 			return;
 		}
 

@@ -53,3 +53,6 @@ Thumbs.db
 
 # Project-specific
 *.uid
+
+# Claude
+.claude/
