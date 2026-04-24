@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=4 uid="uid://cbx27pcqk1ilu"]
+[gd_scene load_steps=4 format=4 uid="uid://cbx27pcqk1ilu"]
 
 [ext_resource type="TileSet" uid="uid://b77ermaowapbw" path="res://Assets/tileset/tileset.tres" id="1_8k36n"]
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="1_rqw78"]
+[ext_resource type="Texture2D" uid="uid://c0qr0lgpp4aan" path="res://Assets/Tiny Swords/Final/Salt.png" id="2_lti4l"]
 
 [node name="SequenceShrineRoom" type="Node2D"]
 
@@ -29,6 +30,9 @@ position = Vector2(-353, -39)
 position = Vector2(14, -31)
 
 [node name="Sprite2D" type="Sprite2D" parent="ShrineInteractable"]
+position = Vector2(6, -41)
+scale = Vector2(0.8214286, 0.73660713)
+texture = ExtResource("2_lti4l")
 
 [node name="Layer0" type="TileMapLayer" parent="."]
 use_parent_material = true
