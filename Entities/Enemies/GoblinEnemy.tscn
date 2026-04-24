@@ -28,7 +28,7 @@ radius = 180.0
 script = ExtResource("1_u5a2n")
 MaterialPickupScene = ExtResource("8_w2r5y")
 collision_layer = 32
-collision_mask = 272
+collision_mask = 273
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")

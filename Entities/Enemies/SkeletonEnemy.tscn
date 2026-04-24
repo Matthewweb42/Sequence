@@ -1,6 +1,6 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=16 format=3 uid="uid://c1i15jc1tiox0"]
 
-[ext_resource type="Script" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
+[ext_resource type="Script" uid="uid://bm0inq1kwl2ah" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
 [ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_d9k6q"]
 [ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="3_s1m7h"]
 [ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="4_q4b8x"]
@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="8_w2r5y"]
 [ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="9_e1f2g"]
 [ext_resource type="Script" path="res://Components/Combat/EntityTagComponent.cs" id="10_h3i4j"]
-[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Skeleton/Attack3.png" id="11_tex"]
+[ext_resource type="Texture2D" uid="uid://bqo51ru0wmc8r" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Skeleton/Attack3.png" id="11_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -28,7 +28,7 @@ radius = 180.0
 script = ExtResource("1_u5a2n")
 MaterialPickupScene = ExtResource("8_w2r5y")
 collision_layer = 32
-collision_mask = 272
+collision_mask = 273
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")

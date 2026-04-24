@@ -7,14 +7,16 @@ using Sequence.Components.Status;
 
 namespace Sequence.Entities.Player;
 
-/// <summary>
-/// Player orchestration script for movement and combat input.
-/// </summary>
 public partial class PlayerController : CharacterBody2D
 {
-	[Export(PropertyHint.Range, "0,2000,1")] public float MoveSpeed { get; set; } = 220f;
+	[Export(PropertyHint.Range, "0,2000,1")] public float MoveSpeed { get; set; } = 350f;
+	[Export(PropertyHint.Range, "0,3000,1")] public float JumpVelocity { get; set; } = 1000f;
 	[Export(PropertyHint.Range, "0.01,2,0.01")] public float AttackWindowSeconds { get; set; } = 0.12f;
 	[Export(PropertyHint.Range, "0,1000,0.1")] public float BasicAttackSanityCost { get; set; } = 5f;
+	// Multiplier applied to gravity when the player is falling (>1 = faster fall)
+	[Export(PropertyHint.Range, "1,5,0.1")] public float FallGravityMultiplier { get; set; } = 2.0f;
+	// Cut jump height when jump key is released early
+	[Export(PropertyHint.Range, "0,1,0.05")] public float JumpCutFraction { get; set; } = 0.5f;
 	[Export] public NodePath? HealthPath { get; set; }
 	[Export] public NodePath? HitboxPath { get; set; }
 	[Export] public NodePath? AbilityPath { get; set; }
@@ -25,6 +27,7 @@ public partial class PlayerController : CharacterBody2D
 	private StatusEffectComponent? _status;
 	private float _attackWindowRemaining;
 	private bool _attackWasPressed;
+	private bool _jumpHeld;
 
 	public override void _Ready()
 	{
@@ -34,24 +37,22 @@ public partial class PlayerController : CharacterBody2D
 		_status = GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
 
 		if (_health != null)
-		{
 			_health.Died += OnDied;
-		}
 	}
 
 	public override void _ExitTree()
 	{
 		if (_health != null)
-		{
 			_health.Died -= OnDied;
-		}
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
+		var step = (float)delta;
+
 		if (_attackWindowRemaining > 0f)
 		{
-			_attackWindowRemaining -= (float)delta;
+			_attackWindowRemaining -= step;
 			if (_attackWindowRemaining <= 0f)
 			{
 				_attackWindowRemaining = 0f;
@@ -66,19 +67,45 @@ public partial class PlayerController : CharacterBody2D
 			return;
 		}
 
-		var moveInput = Input.GetVector("move_left", "move_right", "move_up", "move_down");
-		if (moveInput == Vector2.Zero)
+		var gravity = GetGravity();
+
+		// Apply gravity — use a higher multiplier when falling or when jump key released early
+		if (!IsOnFloor())
 		{
-			moveInput = GetKeyboardMoveFallback();
+			var gravScale = (Velocity.Y > 0f || !_jumpHeld) ? FallGravityMultiplier : 1f;
+			Velocity += gravity * gravScale * step;
 		}
+
+		// Jump — only from floor
+		if (IsOnFloor() && Input.IsActionJustPressed("jump"))
+		{
+			Velocity = new Vector2(Velocity.X, -JumpVelocity);
+			_jumpHeld = true;
+		}
+
+		// Variable jump height: cut velocity when key released mid-air
+		if (_jumpHeld && Input.IsActionJustReleased("jump") && Velocity.Y < 0f)
+		{
+			Velocity = new Vector2(Velocity.X, Velocity.Y * JumpCutFraction);
+			_jumpHeld = false;
+		}
+
+		if (IsOnFloor())
+			_jumpHeld = false;
+
+		// Horizontal movement only
+		var moveX = Input.GetAxis("move_left", "move_right");
+		if (moveX == 0f)
+			moveX = GetKeyboardMoveX();
 
 		var effectiveMoveSpeed = _status != null
 			? _status.GetStat("move_speed", MoveSpeed)
 			: MoveSpeed;
-		Velocity = moveInput * effectiveMoveSpeed;
+		Velocity = new Vector2(moveX * effectiveMoveSpeed, Velocity.Y);
 		MoveAndSlide();
 
-		var attackPressed = Input.IsActionPressed("attack") || Input.IsKeyPressed(Key.Space);
+		// Attack
+		var attackPressed = Input.IsActionPressed("attack");
 		var attackJustPressed = attackPressed && !_attackWasPressed;
 		_attackWasPressed = attackPressed;
 
@@ -114,24 +141,15 @@ public partial class PlayerController : CharacterBody2D
 	private T? ResolveNode<T>(NodePath? path, string fallbackName) where T : Node
 	{
 		if (path != null && !path.IsEmpty)
-		{
 			return GetNodeOrNull<T>(path);
-		}
-
 		return GetNodeOrNull<T>(fallbackName);
 	}
 
-	private Vector2 GetKeyboardMoveFallback()
+	private float GetKeyboardMoveX()
 	{
 		var x = 0f;
-		var y = 0f;
-
 		if (Input.IsKeyPressed(Key.A)) x -= 1f;
 		if (Input.IsKeyPressed(Key.D)) x += 1f;
-		if (Input.IsKeyPressed(Key.W)) y -= 1f;
-		if (Input.IsKeyPressed(Key.S)) y += 1f;
-
-		var v = new Vector2(x, y);
-		return v == Vector2.Zero ? Vector2.Zero : v.Normalized();
+		return x;
 	}
 }

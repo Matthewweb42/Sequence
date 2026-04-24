@@ -1,20 +1,7 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=7 format=3 uid="uid://b22a6fqpkdk66"]
 
-[ext_resource type="Script" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
-[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_g5wqj"]
-[ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="3_8k6sx"]
-[ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="4_u2c8v"]
-[ext_resource type="Script" path="res://Components/Sanity/SanityComponent.cs" id="5_n3x6m"]
-[ext_resource type="Script" path="res://Components/Sequence/SequenceComponent.cs" id="6_e8q1c"]
-[ext_resource type="Script" path="res://Components/Inventory/InventoryComponent.cs" id="7_m9p2h"]
-[ext_resource type="Script" path="res://Components/Ability/AbilityComponent.cs" id="8_j4f0r"]
-[ext_resource type="Script" path="res://Components/Pathway/PathwayComponent.cs" id="9_v7d3k"]
-[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="10_s2t4u"]
-[ext_resource type="Script" path="res://Components/Ability/ChannelComponent.cs" id="11_c3h5v"]
-[ext_resource type="Script" path="res://Entities/Player/BardAbilityHandler.cs" id="12_b6p7w"]
-[ext_resource type="PackedScene" path="res://Entities/Projectiles/SunshineBurstProjectile.tscn" id="13_sun1a"]
-[ext_resource type="PackedScene" path="res://Entities/Projectiles/PureWhiteRayProjectile.tscn" id="14_ray2b"]
-[ext_resource type="PackedScene" path="res://Entities/Projectiles/LightPillar.tscn" id="15_pil3c"]
+[ext_resource type="Script" uid="uid://e5igw64p3dkm" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
+[ext_resource type="Texture2D" uid="uid://c0xyqdkr0q0m5" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Idle.png" id="16_warrior"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -29,9 +16,9 @@ radius = 16.0
 radius = 200.0
 
 [node name="Player" type="CharacterBody2D"]
+collision_layer = 17
+collision_mask = 257
 script = ExtResource("1_k2mn4")
-collision_layer = 16
-collision_mask = 288
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
@@ -39,6 +26,10 @@ shape = SubResource("RectangleShape2D_body")
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("16_warrior")
+region_enabled = true
+region_rect = Rect2(0, 0, 192, 192)
 
 [node name="DebugBody" type="Polygon2D" parent="."]
 color = Color(0.203922, 0.780392, 0.929412, 1)
@@ -48,20 +39,19 @@ polygon = PackedVector2Array(-9, -12, -9, 12, 9, 12, 9, -12)
 color = Color(0.054902, 0.0862745, 0.129412, 1)
 polygon = PackedVector2Array(2, -4, 2, 0, 6, 0, 6, -4)
 
-[node name="HealthComponent" type="Node" parent="." script=ExtResource("2_g5wqj")]
+[node name="Camera2D" type="Camera2D" parent="."]
 
-[node name="SanityComponent" type="Node" parent="." script=ExtResource("5_n3x6m")]
+[node name="HealthComponent" type="Node" parent="."]
 
-[node name="HurtboxComponent" type="Area2D" parent="." script=ExtResource("3_8k6sx")]
-Team = 1
-collision_layer = 1
+[node name="SanityComponent" type="Node" parent="."]
+
+[node name="HurtboxComponent" type="Area2D" parent="."]
 collision_mask = 128
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
 shape = SubResource("RectangleShape2D_hurtbox")
 
-[node name="HitboxComponent" type="Area2D" parent="." script=ExtResource("4_u2c8v")]
-Team = 1
+[node name="HitboxComponent" type="Area2D" parent="."]
 collision_layer = 4
 collision_mask = 2
 monitoring = false
@@ -70,8 +60,7 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
 shape = SubResource("CircleShape2D_hitbox")
 
-[node name="AoEHitboxComponent" type="Area2D" parent="." script=ExtResource("4_u2c8v")]
-Team = 1
+[node name="AoEHitboxComponent" type="Area2D" parent="."]
 collision_layer = 4
 collision_mask = 2
 monitoring = false
@@ -80,26 +69,16 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AoEHitboxComponent"]
 shape = SubResource("CircleShape2D_aoe")
 
-[node name="SequenceComponent" type="Node" parent="." script=ExtResource("6_e8q1c")]
+[node name="SequenceComponent" type="Node" parent="."]
 
-[node name="InventoryComponent" type="Node" parent="." script=ExtResource("7_m9p2h")]
+[node name="InventoryComponent" type="Node" parent="."]
 
-[node name="AbilityComponent" type="Node" parent="." script=ExtResource("8_j4f0r")]
+[node name="AbilityComponent" type="Node" parent="."]
 
-[node name="StatusEffectComponent" type="Node" parent="." script=ExtResource("10_s2t4u")]
+[node name="StatusEffectComponent" type="Node" parent="."]
 
-[node name="ChannelComponent" type="Node" parent="." script=ExtResource("11_c3h5v")]
-HurtboxPath = NodePath("../HurtboxComponent")
+[node name="ChannelComponent" type="Node" parent="."]
 
-[node name="PathwayComponent" type="Node" parent="." script=ExtResource("9_v7d3k")]
-PathwayId = "bard"
-AbilityPath = NodePath("../AbilityComponent")
-StartingAbilityIds = PackedStringArray("basic_attack", "bardic_song", "dispel_fear", "spiritual_recovery_hymn")
-SequenceUnlockLevels = PackedInt32Array(8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 6, 5, 5, 5, 5)
-SequenceUnlockAbilityIds = PackedStringArray("sun_eyes", "sunshine_burst", "blinding_flash", "holy_water_ritual", "physical_fortification", "horror_immunity", "theurgical_purification", "light_of_holiness", "truth_seal", "contract_binding", "notarized_enhancement", "light_of_holiness_ascended", "solar_oath", "pure_white_ray", "night_vision_permanent")
+[node name="PathwayComponent" type="Node" parent="."]
 
-[node name="BardAbilityHandler" type="Node" parent="." script=ExtResource("12_b6p7w")]
-AoEHitboxPath = NodePath("../AoEHitboxComponent")
-SunshineBurstScene = ExtResource("13_sun1a")
-PureWhiteRayScene = ExtResource("14_ray2b")
-LightPillarScene = ExtResource("15_pil3c")
+[node name="BardAbilityHandler" type="Node" parent="."]
