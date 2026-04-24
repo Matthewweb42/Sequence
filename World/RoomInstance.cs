@@ -30,6 +30,13 @@ public partial class RoomInstance : Node2D
 	/// <summary>The archetype of this room (Combat, Shrine, Material, etc.).</summary>
 	public RoomArchetype Archetype { get; set; }
 
+	/// <summary>
+	/// In the current demo flow, this keeps newly spawned enemies close enough
+	/// to immediately detect and chase the player.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,2000,1")]
+	public float EnemySpawnAggroDistanceCap { get; set; } = 150f;
+
 	// ─────────────────────────────────────────────
 	//  Runtime State
 	// ─────────────────────────────────────────────
@@ -376,6 +383,8 @@ public partial class RoomInstance : Node2D
 			return;
 		}
 
+		var playerNode = runManager.Player as Node2D;
+
 		// Spawn enemies at each designated spawn point
 		for (int i = 0; i < Mathf.Min(enemyCount, _enemySpawnPoints.GetChildCount()); i++)
 		{
@@ -393,15 +402,25 @@ public partial class RoomInstance : Node2D
 				continue;
 			}
 
-			// Position at spawn point
-			enemy.GlobalPosition = spawnPoint.GlobalPosition;
+			// Keep spawn points close enough to engage the player in this demo flow.
+			var spawnPosition = spawnPoint.GlobalPosition;
+			if (playerNode != null && EnemySpawnAggroDistanceCap > 0f)
+			{
+				var toSpawn = spawnPosition - playerNode.GlobalPosition;
+				if (toSpawn.Length() > EnemySpawnAggroDistanceCap)
+				{
+					spawnPosition = playerNode.GlobalPosition + toSpawn.Normalized() * EnemySpawnAggroDistanceCap;
+				}
+			}
+
+			enemy.GlobalPosition = spawnPosition;
 
 			// Add to world
 			enemyContainer.AddChild(enemy);
 
 			_aliveEnemyCount++;
 
-			GD.Print($"[RoomInstance] Spawned enemy at {spawnPoint.GlobalPosition}");
+			GD.Print($"[RoomInstance] Spawned enemy at {spawnPosition}");
 		}
 
 		GD.Print($"[RoomInstance] Spawned {_aliveEnemyCount} enemies for room {RoomId}");

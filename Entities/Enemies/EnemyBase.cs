@@ -164,12 +164,12 @@ public partial class EnemyBase : CharacterBody2D
 
 	private void OnAggroAcquired(Node2D target)
 	{
-		_fsm?.QueueTransition("Chase");
+		_fsm?.TransitionNow("Chase");
 	}
 
 	private void OnAggroLost(Node2D? target)
 	{
-		_fsm?.QueueTransition("Idle");
+		_fsm?.TransitionNow("Idle");
 	}
 
 	private void OnDied(Node? source)
@@ -198,7 +198,7 @@ public partial class EnemyBase : CharacterBody2D
 		if (target == null || !GodotObject.IsInstanceValid(target))
 		{
 			Velocity = Vector2.Zero;
-			_fsm?.QueueTransition("Idle");
+			_fsm?.TransitionNow("Idle");
 			return;
 		}
 
@@ -262,11 +262,11 @@ public partial class EnemyBase : CharacterBody2D
 				{
 					if (_aggro != null && _aggro.HasTarget)
 					{
-						_fsm?.QueueTransition("Chase");
+						_fsm?.TransitionNow("Chase");
 					}
 					else
 					{
-						_fsm?.QueueTransition("Idle");
+						_fsm?.TransitionNow("Idle");
 					}
 				}
 			}

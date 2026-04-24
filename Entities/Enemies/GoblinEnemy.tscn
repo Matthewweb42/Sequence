@@ -39,7 +39,7 @@ shape = SubResource("RectangleShape2D_body")
 texture = ExtResource("11_tex")
 region_enabled = true
 region_rect = Rect2(0, 0, 150, 150)
-scale = Vector2(0.16, 0.16)
+scale = Vector2(1.6, 1.6)
 
 [node name="HealthComponent" type="Node" parent="." script=ExtResource("2_d9k6q")]
 MaxHp = 35.0

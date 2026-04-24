@@ -39,15 +39,7 @@ shape = SubResource("RectangleShape2D_body")
 texture = ExtResource("11_tex")
 region_enabled = true
 region_rect = Rect2(0, 0, 150, 150)
-scale = Vector2(0.16, 0.16)
-
-[node name="DebugBody" type="Polygon2D" parent="."]
-color = Color(0.862745, 0.337255, 0.337255, 1)
-polygon = PackedVector2Array(-9, -12, -9, 12, 9, 12, 9, -12)
-
-[node name="DebugFace" type="Polygon2D" parent="."]
-color = Color(0.2, 0.0588235, 0.0588235, 1)
-polygon = PackedVector2Array(-6, -4, -6, 0, -2, 0, -2, -4)
+scale = Vector2(1.6, 1.6)
 
 [node name="HealthComponent" type="Node" parent="." script=ExtResource("2_d9k6q")]
 MaxHp = 35.0

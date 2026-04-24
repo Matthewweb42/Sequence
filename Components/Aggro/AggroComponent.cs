@@ -30,6 +30,7 @@ public partial class AggroComponent : Area2D
 		BodyExited += OnBodyExited;
 		AreaEntered += OnAreaEntered;
 		AreaExited += OnAreaExited;
+		CallDeferred(nameof(SeedInitialCandidates));
 
 		if (ExplicitTargetPath != null && !ExplicitTargetPath.IsEmpty)
 		{
@@ -37,6 +38,25 @@ public partial class AggroComponent : Area2D
 			if (_currentTarget != null)
 			{
 				AcquireTarget(_currentTarget);
+			}
+		}
+	}
+
+	private void SeedInitialCandidates()
+	{
+		foreach (var body in GetOverlappingBodies())
+		{
+			if (body is Node2D node)
+			{
+				_candidates.Add(node);
+			}
+		}
+
+		foreach (var area in GetOverlappingAreas())
+		{
+			if (area is Node2D node)
+			{
+				_candidates.Add(node);
 			}
 		}
 	}
