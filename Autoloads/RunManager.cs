@@ -35,8 +35,6 @@ public partial class RunManager : Node
 	public override void _Ready()
 	{
 		Instance = this;
-		ResolveSceneReferences();
-		StartRun(CurrentSeed == 0 ? (int)Time.GetUnixTimeFromSystem() : CurrentSeed);
 	}
 
 	public override void _ExitTree()
@@ -53,8 +51,19 @@ public partial class RunManager : Node
 		IsRunActive = true;
 		CurrentRunState = RunState.Active;
 		ResolveSceneReferences();
+
+		GD.Print($"[RunManager] StartRun: Player={Player?.Name ?? "NULL"}, RoomGraph={RoomGraph?.Name ?? "NULL"}, CurrentWorld={CurrentWorld?.Name ?? "NULL"}");
+
+		RoomGraph?.GenerateWorld(seed, sequenceStart: 9, sequenceFinal: 5);
+		GD.Print($"[RunManager] GenerateWorld complete. StartRoomId={RoomGraph?.StartRoomId}");
+
 		EmitSignal(SignalName.RunStarted, CurrentSeed);
 		EmitSignal(SignalName.RunStateChanged, (int)CurrentRunState);
+
+		if (RoomGraph != null)
+			TransitionToRoom(RoomGraph.StartRoomId);
+		else
+			GD.PrintErr("[RunManager] StartRun: RoomGraph is null, cannot transition to starting room");
 	}
 
 	public void EndRun(bool isVictory)
@@ -100,7 +109,7 @@ public partial class RunManager : Node
 
 		CurrentWorld = root;
 		Player = root.FindChild("Player", recursive: true, owned: false);
-		RoomGraph = root.FindChild("RoomGraph", recursive: true, owned: false) as RoomGraph;
+		RoomGraph = RoomGraph.Instance;
 	}
 
 	/// <summary>

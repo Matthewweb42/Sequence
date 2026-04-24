@@ -97,6 +97,8 @@ public class RoomNode
 /// </summary>
 public partial class RoomGraph : Node
 {
+    public static RoomGraph? Instance { get; private set; }
+
     // ── Configuration ────────────────────────
 
     /// <summary>Configurable number of rooms per branch (set in inspector or resource).</summary>
@@ -128,12 +130,15 @@ public partial class RoomGraph : Node
     /// <summary>Room ID of the starting room (root of reachability queries).</summary>
     private int _startRoomId;
 
+    public int StartRoomId => _startRoomId;
+
     // ═══════════════════════════════════════════
     //  Godot Lifecycle
     // ═══════════════════════════════════════════
 
     public override void _Ready()
     {
+        Instance = this;
         if (SignalBus.Instance != null)
         {
             SignalBus.Instance.SequenceAdvanced += OnSequenceAdvanced;
@@ -142,6 +147,8 @@ public partial class RoomGraph : Node
 
     public override void _ExitTree()
     {
+        if (Instance == this)
+            Instance = null;
         if (SignalBus.Instance != null)
         {
             SignalBus.Instance.SequenceAdvanced -= OnSequenceAdvanced;

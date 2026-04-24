@@ -1,0 +1,32 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://UI/Menus/MainMenuController.cs" id="1_mmenu"]
+
+[node name="MainMenu" type="Control"]
+script = ExtResource("1_mmenu")
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+theme_override_constants/separation = 24
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+text = "Sequence"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 48
+
+[node name="StartButton" type="Button" parent="CenterContainer/VBoxContainer"]
+text = "Start"
+custom_minimum_size = Vector2(200, 48)
+
+[node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer"]
+text = "Quit"
+custom_minimum_size = Vector2(200, 48)

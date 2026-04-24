@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://World/RoomGraph.cs" id="1_57qx7"]
+[ext_resource type="PackedScene" path="res://World/RoomGraph.tscn" id="1_rgrph"]
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_3d6ty"]
 [ext_resource type="PackedScene" path="res://UI/HUD/HUD.tscn" id="5_s3w8q"]
+[ext_resource type="Script" path="res://World/WorldController.cs" id="6_wctrl"]
 
 [node name="World" type="Node2D"]
+script = ExtResource("6_wctrl")
 
-[node name="RoomGraph" type="Node" parent="." script=ExtResource("1_57qx7")]
+[node name="RoomGraph" parent="." instance=ExtResource("1_rgrph")]
 
 [node name="RoomContainer" type="Node2D" parent="."]
 
