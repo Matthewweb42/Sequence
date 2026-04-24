@@ -28,6 +28,8 @@ position = Vector2(-353, -39)
 [node name="ShrineInteractable" type="Node2D" parent="."]
 position = Vector2(14, -31)
 
+[node name="Sprite2D" type="Sprite2D" parent="ShrineInteractable"]
+
 [node name="Layer0" type="TileMapLayer" parent="."]
 use_parent_material = true
 scale = Vector2(0.25, 0.25)

@@ -26,6 +26,8 @@ position = Vector2(-353, -39)
 [node name="MaterialNode1" type="Node2D" parent="MaterialNodes"]
 position = Vector2(-2, -49)
 
+[node name="Sprite2D" type="Sprite2D" parent="MaterialNodes/MaterialNode1"]
+
 [node name="SequenceDoors" type="Node" parent="."]
 
 [node name="Layer0" type="TileMapLayer" parent="."]

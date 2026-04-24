@@ -1,10 +1,12 @@
-[gd_scene load_steps=5 format=4 uid="uid://bjhmdivywyip4"]
+[gd_scene load_steps=6 format=4 uid="uid://bjhmdivywyip4"]
 
+[ext_resource type="Script" path="res://World/RoomInstance.cs" id="1_roomins"]
 [ext_resource type="TileSet" uid="uid://b77ermaowapbw" path="res://Assets/tileset/tileset.tres" id="1_jha0p"]
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_jha0p"]
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="2_l1ww1"]
 
 [node name="CombatRoom" type="Node2D"]
+script = ExtResource("1_roomins")
 
 [node name="Layer0" type="TileMapLayer" parent="."]
 use_parent_material = true
