@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FormulaResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/Formulas/FormulaResource.cs" id="1_form"]
+
+[resource]
+script = ExtResource("1_form")
+Id = "formula_s6"
+DisplayName = "High Priest's Chalice"
+TargetSequence = 6
+RequiredMaterials = { "fungal_spore": 2, "seer_ichor": 2, "ember_shard": 1 }

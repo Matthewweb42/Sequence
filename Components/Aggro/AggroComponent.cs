@@ -20,6 +20,7 @@ public partial class AggroComponent : Area2D
 	private readonly HashSet<Node2D> _candidates = new();
 	private Node2D? _currentTarget;
 	private float _timeSinceLastSeen;
+	private bool _seeded;
 
 	public bool HasTarget => _currentTarget != null;
 	public Node2D? CurrentTarget => _currentTarget;
@@ -38,6 +39,24 @@ public partial class AggroComponent : Area2D
 			{
 				AcquireTarget(_currentTarget);
 			}
+		}
+	}
+
+	public override void _PhysicsProcess(double delta)
+	{
+		if (_seeded) return;
+		_seeded = true;
+
+		foreach (var body in GetOverlappingBodies())
+		{
+			if (body is Node2D node)
+				_candidates.Add(node);
+		}
+
+		foreach (var area in GetOverlappingAreas())
+		{
+			if (area is Node2D node)
+				_candidates.Add(node);
 		}
 	}
 
@@ -167,4 +186,3 @@ public partial class AggroComponent : Area2D
 		}
 	}
 }
-

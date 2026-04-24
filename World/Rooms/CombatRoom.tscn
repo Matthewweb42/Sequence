@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://World/RoomInstance.cs" id="1_roominstance"]
 [ext_resource type="Script" path="res://World/RoomTransitionHandler.cs" id="2_roomtransition"]
@@ -8,6 +8,12 @@ tile_size = Vector2i(16, 16)
 
 [sub_resource type="RectangleShape2D" id="connectionpoint_collision"]
 size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="floor_shape"]
+size = Vector2(400, 20)
+
+[sub_resource type="RectangleShape2D" id="platform_shape"]
+size = Vector2(160, 16)
 
 [node name="CombatRoom" type="Node2D" script=ExtResource("1_roominstance")]
 position = Vector2(0, 0)
@@ -61,3 +67,27 @@ position = Vector2(60, 60)
 [node name="MaterialNodes" type="Node" parent="."]
 
 [node name="SequenceDoors" type="Node" parent="."]
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(0, 100)
+collision_layer = 256
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("floor_shape")
+
+[node name="Polygon2D" type="Polygon2D" parent="Floor"]
+color = Color(0.3, 0.25, 0.2, 1)
+polygon = PackedVector2Array(-200, -10, 200, -10, 200, 10, -200, 10)
+
+[node name="Platform" type="StaticBody2D" parent="."]
+position = Vector2(-80, 40)
+collision_layer = 256
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform"]
+shape = SubResource("platform_shape")
+
+[node name="Polygon2D" type="Polygon2D" parent="Platform"]
+color = Color(0.4, 0.35, 0.25, 1)
+polygon = PackedVector2Array(-80, -8, 80, -8, 80, 8, -80, 8)

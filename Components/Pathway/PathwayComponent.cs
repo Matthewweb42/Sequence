@@ -1,5 +1,6 @@
 using Godot;
 using Sequence.Components.Ability;
+using Sequence.Components.Inventory;
 using Sequence.Components.Sequence;
 
 namespace Sequence.Components.Pathway;
@@ -34,12 +35,20 @@ public partial class PathwayComponent : Node
 
         EmitSignal(SignalName.PathwaySelected, PathwayId);
         ApplyStartingAbilities();
+        GrantStartingFormula();
 
         var sequence = GetParent()?.GetNodeOrNull<SequenceComponent>("SequenceComponent");
         if (sequence != null)
         {
             sequence.SequenceAdvanced += OnSequenceAdvanced;
         }
+    }
+
+    private void GrantStartingFormula()
+    {
+        // All pathways start at S9 and know the S8 advancement formula
+        var inventory = GetParent()?.GetNodeOrNull<InventoryComponent>("InventoryComponent");
+        inventory?.DiscoverFormula("formula_s8");
     }
 
     private void ApplyStartingAbilities()

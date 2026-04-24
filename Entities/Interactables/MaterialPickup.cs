@@ -1,10 +1,12 @@
 using Godot;
+using Sequence.Autoloads;
 using Sequence.Components.Inventory;
 
 namespace Sequence.Entities.Interactables;
 
 /// <summary>
 /// Collectible world pickup that grants materials to the player inventory.
+/// Magnetizes toward the player when within 80px.
 /// </summary>
 public partial class MaterialPickup : Area2D
 {
@@ -14,10 +16,26 @@ public partial class MaterialPickup : Area2D
     [Export(PropertyHint.Range, "1,999,1")] public int Amount { get; set; } = 1;
     [Export] public NodePath? InventoryPath { get; set; }
 
+    private const float MagnetRadius = 80f;
+    private const float MagnetSpeed = 400f;
+
     public override void _Ready()
     {
         AreaEntered += OnAreaEntered;
         BodyEntered += OnBodyEntered;
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        var player = RunManager.Instance?.Player as Node2D;
+        if (player == null) return;
+
+        var dist = GlobalPosition.DistanceTo(player.GlobalPosition);
+        if (dist < MagnetRadius && dist > 1f)
+        {
+            var dir = (player.GlobalPosition - GlobalPosition).Normalized();
+            GlobalPosition += dir * MagnetSpeed * (float)delta;
+        }
     }
 
     private void OnAreaEntered(Area2D area)

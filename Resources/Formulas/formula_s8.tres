@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FormulaResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/Formulas/FormulaResource.cs" id="1_form"]
+
+[resource]
+script = ExtResource("1_form")
+Id = "formula_s8"
+DisplayName = "Bard's Draft"
+TargetSequence = 8
+RequiredMaterials = { "common_essence": 3 }

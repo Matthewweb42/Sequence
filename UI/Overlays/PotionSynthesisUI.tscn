@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://UI/PotionSynthesisController.cs" id="1_synth"]
+
+[node name="PotionSynthesisUI" type="Control"]
+script = ExtResource("1_synth")
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="Panel" type="Panel" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_right = 150.0
+offset_top = -160.0
+offset_bottom = 160.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_right = -10.0
+offset_top = 10.0
+offset_bottom = -10.0
+
+[node name="FormulaTitle" type="Label" parent="Panel/VBoxContainer"]
+text = "Sequence Advancement"
+horizontal_alignment = 1
+
+[node name="IngredientsContainer" type="VBoxContainer" parent="Panel/VBoxContainer"]
+size_flags_vertical = 3
+
+[node name="HoldProgress" type="ProgressBar" parent="Panel/VBoxContainer"]
+min_value = 0.0
+max_value = 100.0
+value = 0.0
+custom_minimum_size = Vector2(0, 20)
+
+[node name="StatusLabel" type="Label" parent="Panel/VBoxContainer"]
+text = "Hold [E] to brew"
+horizontal_alignment = 1
+
+[node name="CancelButton" type="Button" parent="Panel/VBoxContainer"]
+text = "Cancel"

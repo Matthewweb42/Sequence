@@ -1,0 +1,15 @@
+# Godot-generated editor/runtime metadata
+.godot/editor/
+.godot/mono/
+.godot/*.cfg
+.godot/*.bin
+
+# .NET build outputs
+**/bin/
+**/obj/
+
+# IDE and OS noise
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db

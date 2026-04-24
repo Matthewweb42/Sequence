@@ -26,6 +26,7 @@ public partial class PlayerController : CharacterBody2D
 	private StatusEffectComponent? _status;
 	private float _attackWindowRemaining;
 	private bool _attackWasPressed;
+	private bool _facingRight = true;
 
 	public override void _Ready()
 	{
@@ -38,6 +39,9 @@ public partial class PlayerController : CharacterBody2D
 		{
 			_health.Died += OnDied;
 		}
+
+		if (_hitbox != null)
+			_hitbox.Damage = 15f;
 	}
 
 	public override void _ExitTree()
@@ -86,6 +90,9 @@ public partial class PlayerController : CharacterBody2D
 			moveX = GetKeyboardMoveX();
 		}
 
+		if (moveX > 0.1f) _facingRight = true;
+		else if (moveX < -0.1f) _facingRight = false;
+
 		var effectiveMoveSpeed = _status != null
 			? _status.GetStat("move_speed", MoveSpeed)
 			: MoveSpeed;
@@ -100,6 +107,7 @@ public partial class PlayerController : CharacterBody2D
 		{
 			if (_ability == null || _ability.TryActivate("basic_attack", sanityCost: BasicAttackSanityCost))
 			{
+				FlipHitboxForFacing();
 				_hitbox?.ActivateWindow();
 				var atkSpeedMult = _status != null ? _status.GetStat("attack_speed_multiplier", 1f) : 1f;
 				_attackWindowRemaining = AttackWindowSeconds / Mathf.Max(0.1f, atkSpeedMult);
@@ -107,8 +115,11 @@ public partial class PlayerController : CharacterBody2D
 		}
 	}
 
+	public bool FacingRight => _facingRight;
+
 	public void OnAttackWindowStart()
 	{
+		FlipHitboxForFacing();
 		_hitbox?.ActivateWindow();
 		_attackWindowRemaining = AttackWindowSeconds;
 	}
@@ -117,6 +128,16 @@ public partial class PlayerController : CharacterBody2D
 	{
 		_attackWindowRemaining = 0f;
 		_hitbox?.DeactivateWindow();
+	}
+
+	private void FlipHitboxForFacing()
+	{
+		if (_hitbox == null) return;
+		var shape = _hitbox.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		if (shape == null) return;
+		var scale = shape.Scale;
+		scale.X = _facingRight ? 1f : -1f;
+		shape.Scale = scale;
 	}
 
 	private void OnDied(Node? source)

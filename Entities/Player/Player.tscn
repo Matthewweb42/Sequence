@@ -18,13 +18,13 @@
 [ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Idle.png" id="16_warrior"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(18, 24)
+size = Vector2(12, 22)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
-size = Vector2(16, 22)
+size = Vector2(12, 22)
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
-radius = 16.0
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_hitbox"]
+points = PackedVector2Array(0, 0, 42.4, -42.4, 52, -30, 58, -15.5, 60, 0, 58, 15.5, 52, 30, 42.4, 42.4)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_aoe"]
 radius = 200.0
@@ -43,7 +43,8 @@ shape = SubResource("RectangleShape2D_body")
 texture = ExtResource("16_warrior")
 region_enabled = true
 region_rect = Rect2(0, 0, 192, 192)
-scale = Vector2(0.15, 0.15)
+scale = Vector2(0.25, 0.25)
+texture_filter = 5
 
 [node name="HealthComponent" type="Node" parent="." script=ExtResource("2_g5wqj")]
 
@@ -65,7 +66,7 @@ monitoring = false
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
-shape = SubResource("CircleShape2D_hitbox")
+shape = SubResource("ConvexPolygonShape2D_hitbox")
 
 [node name="AoEHitboxComponent" type="Area2D" parent="." script=ExtResource("4_u2c8v")]
 Team = 1

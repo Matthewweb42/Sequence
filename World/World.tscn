@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=10 format=3 uid="uid://bsksl7x4lkqk3"]
 
 [ext_resource type="Script" path="res://World/RoomGraph.cs" id="1_57qx7"]
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_3d6ty"]
@@ -51,8 +51,8 @@ collision_mask = 0
 shape = SubResource("floor_shape")
 
 [node name="Polygon2D" type="Polygon2D" parent="TestFloor"]
+color = Color(0.3, 0.25, 0.2, 1)
 polygon = PackedVector2Array(-400, -10, 400, -10, 400, 10, -400, 10)
-color = Color(0.3, 0.25, 0.2, 1.0)
 
 [node name="TestPlatform" type="StaticBody2D" parent="."]
 position = Vector2(-120, 60)
@@ -63,7 +63,7 @@ collision_mask = 0
 shape = SubResource("platform_shape")
 
 [node name="Polygon2D" type="Polygon2D" parent="TestPlatform"]
+color = Color(0.4, 0.35, 0.25, 1)
 polygon = PackedVector2Array(-100, -8, 100, -8, 100, 8, -100, 8)
-color = Color(0.4, 0.35, 0.25, 1.0)
 
 [node name="HUD" parent="." instance=ExtResource("5_s3w8q")]

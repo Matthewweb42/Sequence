@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FormulaResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/Formulas/FormulaResource.cs" id="1_form"]
+
+[resource]
+script = ExtResource("1_form")
+Id = "formula_s5"
+DisplayName = "Notary's Sigil"
+TargetSequence = 5
+RequiredMaterials = { "ember_shard": 2, "eye_dust": 2, "fungal_spore": 1 }

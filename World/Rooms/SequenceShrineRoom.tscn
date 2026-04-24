@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://World/RoomInstance.cs" id="1_roominstance"]
 [ext_resource type="Script" path="res://World/RoomTransitionHandler.cs" id="2_roomtransition"]
+[ext_resource type="PackedScene" path="res://Entities/Interactables/SequenceShrine.tscn" id="3_shrine"]
+[ext_resource type="PackedScene" path="res://UI/Overlays/PotionSynthesisUI.tscn" id="4_synthui"]
 
 [sub_resource type="TileSet" id="tileset_placeholder"]
 tile_size = Vector2i(16, 16)
@@ -58,3 +60,8 @@ shape = SubResource("connectionpoint_collision")
 
 [node name="ShrineInteractable" type="Node2D" parent="."]
 position = Vector2(0, 0)
+
+[node name="SequenceShrine" parent="ShrineInteractable" instance=ExtResource("3_shrine")]
+position = Vector2(0, 0)
+
+[node name="PotionSynthesisUI" parent="ShrineInteractable" instance=ExtResource("4_synthui")]

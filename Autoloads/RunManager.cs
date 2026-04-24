@@ -103,13 +103,6 @@ public partial class RunManager : Node
 		RoomGraph = root.FindChild("RoomGraph", recursive: true, owned: false) as RoomGraph;
 	}
 
-	/// <summary>
-	/// Transition the player to a new room.
-	/// Unloads the current room, instantiates the new room from the template pool,
-	/// positions the player at the appropriate entry point, and emits signals.
-	/// </summary>
-	/// <param name="roomId">The target room ID (from RoomGraph).</param>
-	/// <param name="entryDirection">The cardinal direction the player is entering from (determines exit point from prev room = entry point to new room).</param>
 	public void TransitionToRoom(int roomId, Direction? entryDirection = null)
 	{
 		if (RoomGraph == null || Player == null || CurrentWorld == null)
@@ -118,7 +111,6 @@ public partial class RunManager : Node
 			return;
 		}
 
-		// Get room metadata from RoomGraph
 		RoomNode? roomNode = RoomGraph.GetRoom(roomId);
 		if (roomNode == null)
 		{
@@ -126,7 +118,6 @@ public partial class RunManager : Node
 			return;
 		}
 
-		// Unload current room from RoomContainer
 		var roomContainer = CurrentWorld.FindChild("RoomContainer", recursive: false, owned: false) as Node;
 		if (roomContainer != null)
 		{
@@ -136,7 +127,6 @@ public partial class RunManager : Node
 			}
 		}
 
-		// Load the room template based on archetype
 		PackedScene? roomScene = LoadRoomTemplate(roomNode.Archetype);
 		if (roomScene == null)
 		{
@@ -144,7 +134,6 @@ public partial class RunManager : Node
 			return;
 		}
 
-		// Instantiate the room
 		RoomInstance? newRoom = roomScene.Instantiate<RoomInstance>();
 		if (newRoom == null)
 		{
@@ -152,18 +141,15 @@ public partial class RunManager : Node
 			return;
 		}
 
-		// Configure the room instance
 		newRoom.RoomId = roomId;
 		newRoom.BranchId = roomNode.BranchId;
 		newRoom.Archetype = roomNode.Archetype;
 
-		// Add room to the world
 		if (roomContainer != null)
 		{
 			roomContainer.AddChild(newRoom);
 		}
 
-		// Position the player at the entry point
 		if (Player is Node2D player2D)
 		{
 			if (entryDirection.HasValue)
@@ -172,44 +158,35 @@ public partial class RunManager : Node
 			}
 			else
 			{
-				// Default: position at room center
 				player2D.GlobalPosition = newRoom.GlobalPosition;
 			}
 		}
 
-		// Mark room as visited
 		newRoom.IsVisited = true;
 
-		// Spawn enemies if room is not yet cleared
 		if (!newRoom.IsCleared && newRoom.Archetype != RoomArchetype.Material && newRoom.Archetype != RoomArchetype.Lore &&
 		    newRoom.Archetype != RoomArchetype.SequenceShrine && newRoom.Archetype != RoomArchetype.BossAntechamber)
 		{
 			newRoom.SpawnEnemies();
 		}
 
-		// Update current room
 		SetCurrentRoom(roomId);
-
-		// Emit signals
 		SignalBus.Instance?.PublishRoomEntered(roomId);
 
 		GD.Print($"[RunManager] Transitioned to Room {roomId} ({roomNode.Archetype}) on Branch {roomNode.BranchId}");
 	}
 
-	/// <summary>
-	/// Load the appropriate room template scene based on archetype.
-	/// </summary>
 	private PackedScene? LoadRoomTemplate(RoomArchetype archetype)
 	{
-		string templatePath = archetype switch
+		string? templatePath = archetype switch
 		{
 			RoomArchetype.Combat => "res://World/Rooms/CombatRoom.tscn",
 			RoomArchetype.SequenceShrine => "res://World/Rooms/SequenceShrineRoom.tscn",
 			RoomArchetype.Material => "res://World/Rooms/MaterialRoom.tscn",
-			RoomArchetype.Lore => "res://World/Rooms/MaterialRoom.tscn", // Placeholder: same as Material
-			RoomArchetype.BossAntechamber => "res://World/Rooms/CombatRoom.tscn", // Placeholder
+			RoomArchetype.Lore => "res://World/Rooms/MaterialRoom.tscn",
+			RoomArchetype.BossAntechamber => "res://World/Rooms/CombatRoom.tscn",
 			RoomArchetype.BossRoom => "res://World/Rooms/BossRoom.tscn",
-			RoomArchetype.Hidden => "res://World/Rooms/MaterialRoom.tscn", // Placeholder
+			RoomArchetype.Hidden => "res://World/Rooms/MaterialRoom.tscn",
 			_ => null,
 		};
 

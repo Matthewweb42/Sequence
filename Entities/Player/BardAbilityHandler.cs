@@ -246,6 +246,14 @@ public partial class BardAbilityHandler : Node
         if (SunshineBurstScene == null) return;
 
         var projectile = SunshineBurstScene.Instantiate<SunshineBurstProjectile>();
+
+        // S8 enhancement: add burn DoT on hit
+        if (IsUnlocked("sunshine_burst"))
+        {
+            projectile.StatusOnHit = "burn";
+            projectile.StatusDuration = 3f;
+        }
+
         projectile.Direction = _facingRight ? Vector2.Right : Vector2.Left;
         GetTree()?.CurrentScene?.AddChild(projectile);
         projectile.GlobalPosition = GetParentPosition();
@@ -277,7 +285,19 @@ public partial class BardAbilityHandler : Node
         if (newSequence == 7 && !_physFortApplied)
         {
             ApplyPhysicalFortification();
+            ApplyBasicAttackDamageBonus(1.25f);
         }
+        if (newSequence == 5)
+        {
+            ApplyBasicAttackDamageBonus(1.2f); // Combined with S7: 1.25 * 1.2 = 1.5x total
+        }
+    }
+
+    private void ApplyBasicAttackDamageBonus(float multiplier)
+    {
+        var hitbox = GetParent()?.GetNodeOrNull<Sequence.Components.Hitbox.HitboxComponent>("HitboxComponent");
+        if (hitbox != null)
+            hitbox.Damage *= multiplier;
     }
 
     private void ApplyPhysicalFortification()
@@ -379,7 +399,11 @@ public partial class BardAbilityHandler : Node
         if (nearest == null) return;
 
         var status = nearest.GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
-        status?.ApplyEffect("truth_sealed", 15f, tags: new[] { "truth_sealed", "debuff" });
+
+        // S6: also apply +20% damage taken multiplier
+        status?.ApplyEffect("truth_sealed", 15f,
+            modifiers: new[] { new StatModifier("damage_received_multiplier", 1.2f, ModifierOp.Multiplicative) },
+            tags: new[] { "truth_sealed", "debuff" });
     }
 
     private void ExecuteContractBinding()
@@ -419,7 +443,10 @@ public partial class BardAbilityHandler : Node
     {
         if (_status == null) return;
 
-        _status.ApplyEffect("solar_oath", 20f,
+        // S5: extended duration 20→25s
+        var duration = IsUnlocked("solar_oath") ? 25f : 20f;
+
+        _status.ApplyEffect("solar_oath", duration,
             modifiers: new[]
             {
                 new StatModifier("damage_multiplier", 1.35f, ModifierOp.Multiplicative),
@@ -484,6 +511,12 @@ public partial class BardAbilityHandler : Node
 
     private void TrackFacing()
     {
+        // Delegate to PlayerController's canonical facing state
+        if (GetParent() is PlayerController pc)
+        {
+            _facingRight = pc.FacingRight;
+            return;
+        }
         var moveX = Input.GetAxis("move_left", "move_right");
         if (moveX > 0.1f) _facingRight = true;
         else if (moveX < -0.1f) _facingRight = false;

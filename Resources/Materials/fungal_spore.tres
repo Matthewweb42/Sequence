@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MaterialResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/Materials/MaterialResource.cs" id="1_mat"]
+
+[resource]
+script = ExtResource("1_mat")
+Id = "fungal_spore"
+DisplayName = "Fungal Spore"
+Rarity = 0

@@ -260,6 +260,14 @@ public partial class RoomInstance : Node2D
 	//  Enemy Spawning
 	// ═══════════════════════════════════════════════════════════════════════════════════
 
+	private static readonly string[] EnemyScenePaths =
+	{
+		"res://Entities/Enemies/GoblinEnemy.tscn",
+		"res://Entities/Enemies/SkeletonEnemy.tscn",
+		"res://Entities/Enemies/MushroomEnemy.tscn",
+		"res://Entities/Enemies/FlyingEyeEnemy.tscn",
+	};
+
 	/// <summary>
 	/// Spawn enemies at each spawn point in this room based on archetype.
 	/// Rooms that don't support enemies are skipped.
@@ -283,17 +291,9 @@ public partial class RoomInstance : Node2D
 		int enemyCount = Archetype switch
 		{
 			RoomArchetype.Combat => 2 + (int)(GD.Randi() % 3), // 2-4 enemies
-			RoomArchetype.BossRoom => 1, // Single boss
+			RoomArchetype.BossRoom => 1,
 			_ => 0,
 		};
-
-		// Load the enemy template
-		var enemyScene = GD.Load<PackedScene>("res://Entities/Enemies/Enemy.tscn");
-		if (enemyScene == null)
-		{
-			GD.PrintErr("[RoomInstance] Failed to load enemy template scene");
-			return;
-		}
 
 		// Get EnemyContainer from RunManager's CurrentWorld
 		var runManager = RunManager.Instance;
@@ -314,12 +314,17 @@ public partial class RoomInstance : Node2D
 		for (int i = 0; i < Mathf.Min(enemyCount, _enemySpawnPoints.GetChildCount()); i++)
 		{
 			var spawnPoint = _enemySpawnPoints.GetChild<Node2D>(i);
-			if (spawnPoint == null)
+			if (spawnPoint == null) continue;
+
+			// Pick a random typed enemy scene each time
+			var scenePath = EnemyScenePaths[GD.Randi() % (uint)EnemyScenePaths.Length];
+			var enemyScene = GD.Load<PackedScene>(scenePath);
+			if (enemyScene == null)
 			{
+				GD.PrintErr($"[RoomInstance] Failed to load enemy scene: {scenePath}");
 				continue;
 			}
 
-			// Instantiate enemy
 			var enemy = enemyScene.Instantiate<CharacterBody2D>();
 			if (enemy == null)
 			{
@@ -327,15 +332,12 @@ public partial class RoomInstance : Node2D
 				continue;
 			}
 
-			// Position at spawn point
-			enemy.GlobalPosition = spawnPoint.GlobalPosition;
-
-			// Add to world
 			enemyContainer.AddChild(enemy);
-
+			enemy.GlobalPosition = spawnPoint.GlobalPosition;
 			_aliveEnemyCount++;
 
-			GD.Print($"[RoomInstance] Spawned enemy at {spawnPoint.GlobalPosition}");
+			var playerPos = RunManager.Instance?.Player is Node2D p ? p.GlobalPosition : Vector2.Zero;
+			GD.Print($"[RoomInstance] Spawned {scenePath.GetFile()} at {spawnPoint.GlobalPosition} | player at {playerPos} | dist={spawnPoint.GlobalPosition.DistanceTo(playerPos):0.#}");
 		}
 
 		GD.Print($"[RoomInstance] Spawned {_aliveEnemyCount} enemies for room {RoomId}");

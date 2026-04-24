@@ -25,13 +25,13 @@ public partial class EnemyBase : CharacterBody2D
 	[Export] public NodePath? StateMachinePath { get; set; }
 	[Export] public PackedScene? MaterialPickupScene { get; set; }
 
-	private AggroComponent? _aggro;
-	private HealthComponent? _health;
-	private HitboxComponent? _hitbox;
-	private DropComponent? _drop;
-	private StateMachineComponent? _fsm;
-	private StatusEffectComponent? _status;
-	private float _attackCooldownRemaining;
+	protected AggroComponent? _aggro;
+	protected HealthComponent? _health;
+	protected HitboxComponent? _hitbox;
+	protected DropComponent? _drop;
+	protected StateMachineComponent? _fsm;
+	protected StatusEffectComponent? _status;
+	protected float _attackCooldownRemaining;
 	private float _attackWindupRemaining;
 	private float _attackActiveRemaining;
 
@@ -149,6 +149,8 @@ public partial class EnemyBase : CharacterBody2D
 		MoveAndSlide();
 	}
 
+	protected virtual bool CanJump => true;
+
 	private void RegisterDefaultStates()
 	{
 		if (_fsm == null)
@@ -159,6 +161,7 @@ public partial class EnemyBase : CharacterBody2D
 		_fsm.RegisterState(new EnemySimpleState("Idle"), setAsInitial: true);
 		_fsm.RegisterState(new EnemySimpleState("Chase"));
 		_fsm.RegisterState(new EnemySimpleState("Attack"));
+		_fsm.RegisterState(new EnemySimpleState("Stagger"));
 		_fsm.RegisterState(new EnemySimpleState("Death"));
 	}
 
@@ -193,7 +196,7 @@ public partial class EnemyBase : CharacterBody2D
 		}
 	}
 
-	private void UpdateChase(Node2D? target)
+	protected virtual void UpdateChase(Node2D? target)
 	{
 		if (target == null || !GodotObject.IsInstanceValid(target))
 		{
@@ -217,14 +220,23 @@ public partial class EnemyBase : CharacterBody2D
 
 		var dirX = Mathf.Sign(offset.X);
 		Velocity = new Vector2(dirX * MoveSpeed, Velocity.Y);
+
+		if (CanJump && IsOnFloor() && offset.Y < -24f && horizontalDistance < 200f)
+		{
+			Velocity = new Vector2(Velocity.X, -420f);
+		}
 	}
 
-	private bool CanStartAttack()
+	protected virtual void OnAttackWindowOpened() { }
+
+	protected virtual void OnAttackWindowActive(float elapsed) { }
+
+	protected bool CanStartAttack()
 	{
 		return _attackCooldownRemaining <= 0f && _attackWindupRemaining <= 0f && _attackActiveRemaining <= 0f;
 	}
 
-	private void StartAttack()
+	protected void StartAttack()
 	{
 		_fsm?.TransitionNow("Attack");
 		_attackCooldownRemaining = AttackCooldownSeconds;
@@ -232,6 +244,9 @@ public partial class EnemyBase : CharacterBody2D
 		_attackActiveRemaining = 0f;
 		_hitbox?.DeactivateWindow();
 	}
+
+	protected void OccupyAttackSlot() { }
+	protected void ReleaseAttackSlot() { }
 
 	private void TickAttackTimers(float step)
 	{
@@ -248,11 +263,14 @@ public partial class EnemyBase : CharacterBody2D
 				_attackWindupRemaining = 0f;
 				_hitbox?.ActivateWindow();
 				_attackActiveRemaining = AttackActiveSeconds;
+				OnAttackWindowOpened();
 			}
 		}
 
 		if (_attackActiveRemaining > 0f)
 		{
+			var elapsed = AttackActiveSeconds - _attackActiveRemaining;
+			OnAttackWindowActive(Mathf.Max(0f, elapsed));
 			_attackActiveRemaining -= step;
 			if (_attackActiveRemaining <= 0f)
 			{
@@ -297,7 +315,7 @@ public partial class EnemyBase : CharacterBody2D
 		return GetNodeOrNull<T>(fallbackName);
 	}
 
-	private class EnemySimpleState : State
+	public class EnemySimpleState : State
 	{
 		public EnemySimpleState(string name) : base(name)
 		{
