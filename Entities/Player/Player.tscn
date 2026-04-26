@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://b22a6fqpkdk66"]
+[gd_scene load_steps=15 format=3 uid="uid://b22a6fqpkdk66"]
 
 [ext_resource type="Script" uid="uid://e5igw64p3dkm" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
 [ext_resource type="Script" uid="uid://csw3twea16j82" path="res://Components/Health/HealthComponent.cs" id="2_health"]

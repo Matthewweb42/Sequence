@@ -1,5 +1,6 @@
 using Godot;
 using Sequence.Autoloads;
+using Sequence.World;
 
 namespace Sequence.Entities.Interactables;
 
@@ -31,11 +32,20 @@ public partial class SequenceDoor : Area2D
 	/// <summary>Current lock state; updated when player advances Sequence.</summary>
 	private bool _isLocked = true;
 
-	/// <summary>Visual representation node (sprite or AnimatedSprite2D).</summary>
+	/// <summary>Visual representation node.</summary>
 	private Node2D? _visual;
 
-	/// <summary>Collision shape that disables when door unlocks.</summary>
+	/// <summary>Collision shape for the Area2D detection region.</summary>
 	private CollisionShape2D? _collisionShape;
+
+	/// <summary>StaticBody2D child that physically blocks the player when locked.</summary>
+	private StaticBody2D? _blocker;
+
+	/// <summary>Collision shape on the Blocker StaticBody2D.</summary>
+	private CollisionShape2D? _blockerShape;
+
+	/// <summary>Label showing the required sequence number.</summary>
+	private Label? _label;
 
 	// ═══════════════════════════════════════════════════════════════════════════════════
 	//  Properties
@@ -44,11 +54,11 @@ public partial class SequenceDoor : Area2D
 	public bool IsLocked
 	{
 		get => _isLocked;
-		private set
+		set
 		{
 			if (_isLocked == value)
 			{
-				return; // No change
+				return;
 			}
 
 			_isLocked = value;
@@ -62,19 +72,94 @@ public partial class SequenceDoor : Area2D
 
 	public override void _Ready()
 	{
-		// Cache child nodes
+		// Try to find children authored in the .tscn (editor use)
 		_visual = GetNodeOrNull<Node2D>("Visual");
 		_collisionShape = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		_blocker = GetNodeOrNull<StaticBody2D>("Blocker");
+		_blockerShape = _blocker?.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		_label = GetNodeOrNull<Label>("Visual/Label");
 
-		// Connect to sequence advancement signal
+		// When created via new SequenceDoor() at runtime the .tscn children don't exist — build them
+		if (_visual == null)
+		{
+			BuildChildrenProgrammatically();
+		}
+
 		if (SignalBus.Instance != null)
 		{
 			SignalBus.Instance.SequenceAdvanced += OnSequenceAdvanced;
 		}
 
-		// Set initial locked state (assume locked at start)
 		IsLocked = true;
 		UpdateVisualState();
+	}
+
+	/// <summary>
+	/// Creates the door's visual and physics children in code.
+	/// Called when the door is instantiated via <c>new SequenceDoor()</c> rather than from a .tscn.
+	/// </summary>
+	private void BuildChildrenProgrammatically()
+	{
+		// ── Visual ─────────────────────────────────────────────────────────
+		_visual = new Node2D { Name = "Visual" };
+		AddChild(_visual);
+
+		// Door body
+		var body = new Polygon2D
+		{
+			Color = new Color(0.35f, 0.2f, 0.1f, 0.9f),
+			Polygon = new Vector2[] { new(-30, -70), new(-30, 70), new(30, 70), new(30, -70) }
+		};
+		_visual.AddChild(body);
+
+		// Horizontal cross-planks
+		var plankTop = new Polygon2D
+		{
+			Color = new Color(0.5f, 0.3f, 0.15f, 0.9f),
+			Polygon = new Vector2[] { new(-30, -25), new(-30, -17), new(30, -17), new(30, -25) }
+		};
+		_visual.AddChild(plankTop);
+
+		var plankBottom = new Polygon2D
+		{
+			Color = new Color(0.5f, 0.3f, 0.15f, 0.9f),
+			Polygon = new Vector2[] { new(-30, 17), new(-30, 25), new(30, 25), new(30, 17) }
+		};
+		_visual.AddChild(plankBottom);
+
+		// Sequence label
+		_label = new Label
+		{
+			Name = "Label",
+			OffsetLeft = -30,
+			OffsetTop = -10,
+			OffsetRight = 30,
+			OffsetBottom = 10,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			VerticalAlignment = VerticalAlignment.Center,
+		};
+		_visual.AddChild(_label);
+
+		// ── Area2D collision (detection) ────────────────────────────────────
+		_collisionShape = new CollisionShape2D
+		{
+			Shape = new RectangleShape2D { Size = new Vector2(40, 120) }
+		};
+		AddChild(_collisionShape);
+
+		// ── StaticBody2D (physical blocker) ────────────────────────────────
+		_blocker = new StaticBody2D
+		{
+			Name = "Blocker",
+			CollisionLayer = 1,
+			CollisionMask = 0
+		};
+		_blockerShape = new CollisionShape2D
+		{
+			Shape = new RectangleShape2D { Size = new Vector2(60, 140) }
+		};
+		_blocker.AddChild(_blockerShape);
+		AddChild(_blocker);
 	}
 
 	public override void _ExitTree()
@@ -115,32 +200,42 @@ public partial class SequenceDoor : Area2D
 	/// </summary>
 	private void UpdateVisualState()
 	{
-		// Update collision (disable collision when unlocked)
+		// Area2D detection region
 		if (_collisionShape != null)
-		{
 			_collisionShape.Disabled = !IsLocked;
-		}
 
-		// Update visual appearance
+		// Physical blocker — enabled when locked so the player cannot walk through
+		if (_blockerShape != null)
+			_blockerShape.Disabled = !IsLocked;
+
+		// Update label text with required sequence
+		if (_label != null)
+			_label.Text = $"Seq {RequiredSequence}";
+
+		// Show door visual when locked; hide it when unlocked so the corridor is clear
 		if (_visual != null)
 		{
-			if (IsLocked)
-			{
-				// Locked state: visible, solid
-				_visual.Show();
-				_visual.Modulate = new Color(1, 0.2f, 0.2f, 0.8f); // Red tint
-			}
-			else
-			{
-				// Unlocked state: dimmed or faded out
-				_visual.Show();
-				_visual.Modulate = new Color(0.3f, 1, 0.3f, 0.3f); // Green tint, semi-transparent
-			}
+			_visual.Visible = IsLocked;
+			_visual.Modulate = new Color(1f, 0.4f, 0.4f, 1f);
 		}
 
-		// Log state change
-		string lockState = IsLocked ? "LOCKED" : "UNLOCKED";
-		GD.Print($"[SequenceDoor] Door @ Sequence {RequiredSequence} is now {lockState} (Branches {ConnectedBranches.X} <-> {ConnectedBranches.Y})");
+		GD.Print($"[SequenceDoor] Door @ Sequence {RequiredSequence} is now {(IsLocked ? "LOCKED" : "UNLOCKED")} (Branches {ConnectedBranches.X} <-> {ConnectedBranches.Y})");
+	}
+
+	/// <summary>
+	/// Initialize this door from graph edge data at runtime.
+	/// Called by RoomInstance.ConfigureConnectionPoints when a gated connection is found.
+	/// </summary>
+	public void ConfigureFromDoorInfo(DoorInfo doorInfo, Direction facing)
+	{
+		RequiredSequence = doorInfo.RequiredSequence;
+		ConnectedBranches = new Vector2I(doorInfo.ConnectedBranches.BranchA, doorInfo.ConnectedBranches.BranchB);
+		_isLocked = doorInfo.IsLocked;
+		if (facing == Direction.North || facing == Direction.South)
+		{
+			Rotation = Mathf.Pi / 2f;
+		}
+		UpdateVisualState();
 	}
 
 	/// <summary>

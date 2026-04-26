@@ -1,5 +1,6 @@
-[gd_scene load_steps=5 format=4 uid="uid://bnu1ctsc1scb2"]
+[gd_scene load_steps=6 format=4 uid="uid://bnu1ctsc1scb2"]
 
+[ext_resource type="Script" uid="uid://dtpslc1kuiaw6" path="res://World/RoomInstance.cs" id="1_roomins"]
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="1_p6yx7"]
 [ext_resource type="TileSet" uid="uid://b77ermaowapbw" path="res://Assets/tileset/tileset.tres" id="1_w2r4m"]
 [ext_resource type="Texture2D" uid="uid://c2slhv3e2i1o1" path="res://Assets/Tiny Swords/Tiny Swords/Terrain/Resources/Meat/Meat Resource/Meat Resource.png" id="2_iijir"]
@@ -8,6 +9,7 @@
 size = Vector2(38, 33)
 
 [node name="MaterialRoom" type="Node2D"]
+script = ExtResource("1_roomins")
 
 [node name="ConnectionPoints" type="Node" parent="."]
 

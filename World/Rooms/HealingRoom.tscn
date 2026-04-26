@@ -1,5 +1,6 @@
-[gd_scene load_steps=16 format=4 uid="uid://cvxvejyhw08a4"]
+[gd_scene load_steps=17 format=4 uid="uid://cvxvejyhw08a4"]
 
+[ext_resource type="Script" uid="uid://dtpslc1kuiaw6" path="res://World/RoomInstance.cs" id="1_roomins"]
 [ext_resource type="TileSet" uid="uid://b77ermaowapbw" path="res://Assets/tileset/tileset.tres" id="1_8qvhd"]
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="1_g2qj8"]
 [ext_resource type="Texture2D" uid="uid://b8ksmo7noel4g" path="res://Assets/Tiny Swords/Tiny Swords/Units/Red Units/Monk/Heal_Effect.png" id="2_ewi10"]
@@ -90,6 +91,7 @@ animations = [{
 }]
 
 [node name="HealingRoom" type="Node2D"]
+script = ExtResource("1_roomins")
 
 [node name="ConnectionPoints" type="Node" parent="."]
 

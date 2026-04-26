@@ -79,6 +79,9 @@ public class RoomNode
     /// <summary>Whether the player has entered this room at least once.</summary>
     public bool IsVisited { get; set; }
 
+    /// <summary>Whether the shrine in this room has been consumed (only meaningful for SequenceShrine archetype).</summary>
+    public bool IsShrineUsed { get; set; }
+
     /// <summary>
     /// Adjacency list: maps a neighbouring RoomNode to the DoorInfo
     /// that separates them (null if the connection is always open).
@@ -131,6 +134,9 @@ public partial class RoomGraph : Node
     private int _startRoomId;
 
     public int StartRoomId => _startRoomId;
+
+    /// <summary>All rooms in the generated graph. For UI/debug iteration.</summary>
+    public IEnumerable<RoomNode> AllRooms => _rooms.Values;
 
     // ═══════════════════════════════════════════
     //  Godot Lifecycle
@@ -668,6 +674,18 @@ public partial class RoomGraph : Node
         }
 
         return new List<RoomNode>(room.Neighbours.Keys);
+    }
+
+    /// <summary>
+    /// Returns true if the two rooms have an explicit graph edge between them
+    /// (either an open connection or a gated door). Purely spatially adjacent
+    /// rooms that were never connected in the graph return false.
+    /// </summary>
+    public bool AreRoomsConnected(int roomIdA, int roomIdB)
+    {
+        if (!_rooms.TryGetValue(roomIdA, out RoomNode? roomA) || roomA == null) return false;
+        if (!_rooms.TryGetValue(roomIdB, out RoomNode? roomB) || roomB == null) return false;
+        return roomA.Neighbours.ContainsKey(roomB);
     }
 
     /// <summary>

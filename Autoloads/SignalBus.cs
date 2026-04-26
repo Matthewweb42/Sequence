@@ -24,6 +24,7 @@ public partial class SignalBus : Node
 	[Signal] public delegate void AbilityActivatedEventHandler(Resource ability);
 	[Signal] public delegate void SanityDepletedEventHandler();
 	[Signal] public delegate void ArtifactPickedUpEventHandler(Resource artifact);
+	[Signal] public delegate void ShrineConsumedEventHandler(int roomId);
 
 	public override void _Ready()
 	{
@@ -101,6 +102,11 @@ public partial class SignalBus : Node
 	public void PublishArtifactPickedUp(Resource artifact)
 	{
 		EmitSignal(SignalName.ArtifactPickedUp, artifact);
+	}
+
+	public void PublishShrineConsumed(int roomId)
+	{
+		EmitSignal(SignalName.ShrineConsumed, roomId);
 	}
 }
 

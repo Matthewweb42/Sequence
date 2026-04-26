@@ -1,9 +1,11 @@
-[gd_scene load_steps=3 format=4 uid="uid://muc45donrjx5"]
+[gd_scene load_steps=4 format=4 uid="uid://muc45donrjx5"]
 
+[ext_resource type="Script" uid="uid://dtpslc1kuiaw6" path="res://World/RoomInstance.cs" id="1_roomins"]
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="1_b8gvm"]
 [ext_resource type="TileSet" uid="uid://b77ermaowapbw" path="res://Assets/tileset/tileset.tres" id="1_bt7in"]
 
 [node name="BossRoom" type="Node2D"]
+script = ExtResource("1_roomins")
 
 [node name="ConnectionPoints" type="Node" parent="."]
 

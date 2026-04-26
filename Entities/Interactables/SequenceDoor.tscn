@@ -1,17 +1,44 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Entities/Interactables/SequenceDoor.cs" id="1_sequencedoor"]
 
-[sub_resource type="RectangleShape2D" id="door_collision"]
+[sub_resource type="RectangleShape2D" id="area_collision"]
 size = Vector2(40, 120)
+
+[sub_resource type="RectangleShape2D" id="blocker_collision"]
+size = Vector2(60, 140)
 
 [node name="SequenceDoor" type="Area2D" script=ExtResource("1_sequencedoor")]
 
 [node name="Visual" type="Node2D" parent="."]
 
-[node name="DoorSprite" type="Polygon2D" parent="Visual"]
-color = Color(0.8, 0.2, 0.2, 0.8)
-polygon = PackedVector2Array(-20, -60, -20, 60, 20, 60, 20, -60)
+[node name="Body" type="Polygon2D" parent="Visual"]
+color = Color(0.35, 0.2, 0.1, 0.9)
+polygon = PackedVector2Array(-30, -70, -30, 70, 30, 70, 30, -70)
+
+[node name="PlankTop" type="Polygon2D" parent="Visual"]
+color = Color(0.5, 0.3, 0.15, 0.9)
+polygon = PackedVector2Array(-30, -25, -30, -17, 30, -17, 30, -25)
+
+[node name="PlankBottom" type="Polygon2D" parent="Visual"]
+color = Color(0.5, 0.3, 0.15, 0.9)
+polygon = PackedVector2Array(-30, 17, -30, 25, 30, 25, 30, 17)
+
+[node name="Label" type="Label" parent="Visual"]
+offset_left = -30.0
+offset_top = -10.0
+offset_right = 30.0
+offset_bottom = 10.0
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Seq 9"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("door_collision")
+shape = SubResource("area_collision")
+
+[node name="Blocker" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Blocker"]
+shape = SubResource("blocker_collision")
