@@ -57,6 +57,9 @@ public partial class RoomInstance : Node2D
 	/// </summary>
 	private Node[] _sequenceDoors = new Node[0];
 
+	/// <summary>The shrine in this room, if archetype is SequenceShrine.</summary>
+	private SequenceShrine? _shrine;
+
 	/// <summary>
 	/// Node containing all enemy spawn points (for visual debugging or configurability).
 	/// </summary>
@@ -79,13 +82,25 @@ public partial class RoomInstance : Node2D
 		// Mark as visited on first room load
 		IsVisited = true;
 
+		// Propagate to the persistent graph node so the mini-map can see it after this room unloads.
+		var node = RoomGraph.Instance?.GetRoom(RoomId);
+		if (node != null)
+		{
+			node.IsVisited = true;
+		}
+
 		// Cache child nodes
 		CacheChildNodes();
 
-		// Connect to enemy death signal
+		// Connect to enemy death signal and shrine consumption
 		if (SignalBus.Instance != null)
 		{
 			SignalBus.Instance.EntityDied += OnEnemyDied;
+		}
+
+		if (_shrine != null)
+		{
+			_shrine.ShrineUsed += OnShrineUsed;
 		}
 
 		// Count initial enemies in the room
@@ -102,6 +117,21 @@ public partial class RoomInstance : Node2D
 		{
 			SignalBus.Instance.EntityDied -= OnEnemyDied;
 		}
+
+		if (_shrine != null)
+		{
+			_shrine.ShrineUsed -= OnShrineUsed;
+		}
+	}
+
+	private void OnShrineUsed(Node user, int newSequence)
+	{
+		var node = RoomGraph.Instance?.GetRoom(RoomId);
+		if (node != null)
+		{
+			node.IsShrineUsed = true;
+		}
+		SignalBus.Instance?.PublishShrineConsumed(RoomId);
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════════════
@@ -136,6 +166,22 @@ public partial class RoomInstance : Node2D
 		_enemySpawnPoints = GetNodeOrNull("EnemySpawnPoints");
 		_materialNodes = GetNodeOrNull("MaterialNodes");
 		_tilemap = GetNodeOrNull<TileMapLayer>("Tilemap");
+
+		// Cache shrine if present (recursive type search)
+		_shrine = FindShrineRecursive(this);
+	}
+
+	private static SequenceShrine? FindShrineRecursive(Node parent)
+	{
+		foreach (Node child in parent.GetChildren())
+		{
+			if (child is SequenceShrine shrine)
+				return shrine;
+			var found = FindShrineRecursive(child);
+			if (found != null)
+				return found;
+		}
+		return null;
 	}
 
 	/// <summary>

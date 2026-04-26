@@ -79,6 +79,9 @@ public class RoomNode
     /// <summary>Whether the player has entered this room at least once.</summary>
     public bool IsVisited { get; set; }
 
+    /// <summary>Whether the shrine in this room has been consumed (only meaningful for SequenceShrine archetype).</summary>
+    public bool IsShrineUsed { get; set; }
+
     /// <summary>
     /// Adjacency list: maps a neighbouring RoomNode to the DoorInfo
     /// that separates them (null if the connection is always open).
@@ -131,6 +134,9 @@ public partial class RoomGraph : Node
     private int _startRoomId;
 
     public int StartRoomId => _startRoomId;
+
+    /// <summary>All rooms in the generated graph. For UI/debug iteration.</summary>
+    public IEnumerable<RoomNode> AllRooms => _rooms.Values;
 
     // ═══════════════════════════════════════════
     //  Godot Lifecycle
