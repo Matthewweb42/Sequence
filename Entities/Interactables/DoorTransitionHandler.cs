@@ -126,7 +126,6 @@ public partial class DoorTransitionHandler : Area2D
 			return;
 		}
 
-		// Find adjacent room in this direction
 		RoomNode? adjacentRoom = roomGraph.GetAdjacentRoomInDirection(_parentRoom.RoomId, Direction);
 		if (adjacentRoom == null)
 		{
@@ -134,24 +133,21 @@ public partial class DoorTransitionHandler : Area2D
 			return;
 		}
 
-		// Get player's current Sequence level
-		var player = runManager.Player;
-		int playerSequence = 9; // Default; should query from SequenceComponent if available
-
-		// TODO: Get actual Sequence from player's SequenceComponent
-		// For now, assume sequence 5 for testing purposes
-		playerSequence = 5;
-
-		// Check if the adjacent room is reachable
-		if (!roomGraph.IsRoomReachable(adjacentRoom.RoomId, playerSequence))
+		// Reject if rooms are only spatially adjacent but have no actual graph edge
+		if (!roomGraph.AreRoomsConnected(_parentRoom.RoomId, adjacentRoom.RoomId))
 		{
-			GD.Print($"[DoorTransitionHandler] Room {adjacentRoom.RoomId} is not reachable from {_parentRoom.RoomId} (locked doors)");
-			// TODO: Show lock indicator to player
+			GD.Print($"[DoorTransitionHandler] Room {adjacentRoom.RoomId} is not connected to {_parentRoom.RoomId}");
 			return;
 		}
 
-		// Transition to the adjacent room
-		// The entry direction is the opposite of the exit direction
+		// Check the immediate edge directly — refuse if this specific door is locked
+		DoorInfo? door = roomGraph.GetDoorBetween(_parentRoom.RoomId, adjacentRoom.RoomId);
+		if (door != null && door.IsLocked)
+		{
+			GD.Print($"[DoorTransitionHandler] Door to room {adjacentRoom.RoomId} is locked (requires Sequence ≤ {door.RequiredSequence})");
+			return;
+		}
+
 		Direction entryDirection = GetOppositeDirection(Direction);
 		runManager.TransitionToRoom(adjacentRoom.RoomId, entryDirection);
 	}

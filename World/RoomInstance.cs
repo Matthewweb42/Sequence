@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using Sequence.Autoloads;
+using Sequence.Entities.Interactables;
 
 namespace Sequence.World;
 
@@ -186,12 +187,9 @@ public partial class RoomInstance : Node2D
 
 	/// <summary>
 	/// Called by RunManager after this room is loaded and its RoomId is assigned.
-	/// Queries the RoomGraph to determine which directions have actual neighbours
-	/// and disables any ConnectionPoint that leads nowhere so the player cannot
-	/// accidentally trigger a transition into a dead wall.
-	///
-	/// Optionally shows a "BlockedMarkers/{dir}" child node (if authored in the
-	/// scene) to give the player a visible wall/indicator in that direction.
+	/// Queries the RoomGraph to determine which directions have actual neighbours,
+	/// disables any ConnectionPoint that leads nowhere, and spawns a SequenceDoor
+	/// at every ConnectionPoint whose graph edge is gated (has a DoorInfo).
 	/// </summary>
 	/// <param name="roomGraph">The active RoomGraph for this run.</param>
 	public void ConfigureConnectionPoints(RoomGraph roomGraph)
@@ -200,21 +198,33 @@ public partial class RoomInstance : Node2D
 
 		foreach (Direction dir in System.Enum.GetValues(typeof(Direction)))
 		{
-			bool hasNeighbour = roomGraph.GetAdjacentRoomInDirection(RoomId, dir) != null;
+			RoomNode? adjacent = roomGraph.GetAdjacentRoomInDirection(RoomId, dir);
+			bool hasNeighbour = adjacent != null && roomGraph.AreRoomsConnected(RoomId, adjacent.RoomId);
 
 			// ── ConnectionPoint Area2D ──────────────────────────────────────
 			if (_connectionPoints.TryGetValue(dir, out Node2D? cpNode) && cpNode is Area2D cpArea)
 			{
 				if (hasNeighbour)
 				{
-					// Show door and enable monitoring/collision so transitions work.
 					cpArea.Visible = true;
 					cpArea.Monitoring = true;
 					SetCollisionShapeDisabled(cpArea, disabled: false);
+
+					// Spawn a SequenceDoor if this edge is gated.
+					// Use new SequenceDoor() directly to avoid PackedScene.Instantiate<T>() cast
+					// failures caused by Godot's stale script-type registry.
+					DoorInfo? doorInfo = roomGraph.GetDoorBetween(RoomId, adjacent!.RoomId);
+					if (doorInfo != null)
+					{
+						var door = new SequenceDoor();
+						door.Position = Vector2.Zero;
+						cpArea.AddChild(door);
+						door.ConfigureFromDoorInfo(doorInfo, dir);
+						GD.Print($"[RoomInstance] Room {RoomId}: spawned SequenceDoor at {dir} (req Seq ≤ {doorInfo.RequiredSequence}, locked={doorInfo.IsLocked})");
+					}
 				}
 				else
 				{
-					// Hide door and disable monitoring/collision — no passage in this direction.
 					cpArea.Visible = false;
 					cpArea.Monitoring = false;
 					SetCollisionShapeDisabled(cpArea, disabled: true);

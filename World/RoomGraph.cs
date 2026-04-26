@@ -671,6 +671,18 @@ public partial class RoomGraph : Node
     }
 
     /// <summary>
+    /// Returns true if the two rooms have an explicit graph edge between them
+    /// (either an open connection or a gated door). Purely spatially adjacent
+    /// rooms that were never connected in the graph return false.
+    /// </summary>
+    public bool AreRoomsConnected(int roomIdA, int roomIdB)
+    {
+        if (!_rooms.TryGetValue(roomIdA, out RoomNode? roomA) || roomA == null) return false;
+        if (!_rooms.TryGetValue(roomIdB, out RoomNode? roomB) || roomB == null) return false;
+        return roomA.Neighbours.ContainsKey(roomB);
+    }
+
+    /// <summary>
     /// Returns the door metadata between two rooms, or null if
     /// they are openly connected (no door) or not adjacent.
     /// </summary>
