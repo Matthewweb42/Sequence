@@ -1,16 +1,16 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=16 format=3 uid="uid://dhr7q8nff30fv"]
 
-[ext_resource type="Script" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
-[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_d9k6q"]
-[ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="3_s1m7h"]
-[ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="4_q4b8x"]
-[ext_resource type="Script" path="res://Components/StateMachine/StateMachineComponent.cs" id="5_f2p9t"]
-[ext_resource type="Script" path="res://Components/Aggro/AggroComponent.cs" id="6_r7c3w"]
-[ext_resource type="Script" path="res://Components/Drop/DropComponent.cs" id="7_h1n5m"]
+[ext_resource type="Script" uid="uid://bm0inq1kwl2ah" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
 [ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="8_w2r5y"]
-[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="9_e1f2g"]
-[ext_resource type="Script" path="res://Components/Combat/EntityTagComponent.cs" id="10_h3i4j"]
-[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Goblin/Attack3.png" id="11_tex"]
+[ext_resource type="Texture2D" uid="uid://clkenmf0s8thr" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Goblin/Attack3.png" id="11_tex"]
+[ext_resource type="Script" uid="uid://f1piwqgygyw6" path="res://Components/Aggro/AggroComponent.cs" id="aggro_script"]
+[ext_resource type="Script" uid="uid://h3wo5if5v1le" path="res://Components/Drop/DropComponent.cs" id="drop_script"]
+[ext_resource type="Script" uid="uid://cngdq3fwhnx1x" path="res://Components/StateMachine/StateMachineComponent.cs" id="fsm_script"]
+[ext_resource type="Script" uid="uid://csw3twea16j82" path="res://Components/Health/HealthComponent.cs" id="health_script"]
+[ext_resource type="Script" uid="uid://daewu2ktolrur" path="res://Components/Hitbox/HitboxComponent.cs" id="hitbox_script"]
+[ext_resource type="Script" uid="uid://fhcpxanu07wr" path="res://Components/Hurtbox/HurtboxComponent.cs" id="hurtbox_script"]
+[ext_resource type="Script" uid="uid://btq7sxfpywwqv" path="res://Components/Status/StatusEffectComponent.cs" id="status_script"]
+[ext_resource type="Script" uid="uid://c31bjemeib7tk" path="res://Components/Combat/EntityTagComponent.cs" id="tag_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -25,10 +25,11 @@ radius = 14.0
 radius = 180.0
 
 [node name="GoblinEnemy" type="CharacterBody2D"]
-script = ExtResource("1_u5a2n")
-MaterialPickupScene = ExtResource("8_w2r5y")
-collision_layer = 32
+collision_layer = 17
 collision_mask = 273
+script = ExtResource("1_u5a2n")
+DebugCombat = true
+MaterialPickupScene = ExtResource("8_w2r5y")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
@@ -36,45 +37,52 @@ shape = SubResource("RectangleShape2D_body")
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.6, 1.6)
 texture = ExtResource("11_tex")
 region_enabled = true
 region_rect = Rect2(0, 0, 150, 150)
-scale = Vector2(1.6, 1.6)
 
-[node name="HealthComponent" type="Node" parent="." script=ExtResource("2_d9k6q")]
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("health_script")
 MaxHp = 35.0
 
-[node name="HurtboxComponent" type="Area2D" parent="." script=ExtResource("3_s1m7h")]
-Team = 2
+[node name="HurtboxComponent" type="Area2D" parent="."]
 collision_layer = 2
 collision_mask = 0
+script = ExtResource("hurtbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
 shape = SubResource("RectangleShape2D_hurtbox")
 
-[node name="HitboxComponent" type="Area2D" parent="." script=ExtResource("4_q4b8x")]
-Team = 2
+[node name="HitboxComponent" type="Area2D" parent="."]
 collision_layer = 8
-collision_mask = 1
+collision_mask = 128
 monitoring = false
 monitorable = false
+script = ExtResource("hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
 shape = SubResource("CircleShape2D_hitbox")
 
-[node name="StateMachineComponent" type="Node" parent="." script=ExtResource("5_f2p9t")]
+[node name="StateMachineComponent" type="Node" parent="."]
+script = ExtResource("fsm_script")
 
-[node name="AggroComponent" type="Area2D" parent="." script=ExtResource("6_r7c3w")]
-RequireLineOfSight = false
+[node name="AggroComponent" type="Area2D" parent="."]
 collision_layer = 64
 collision_mask = 16
+script = ExtResource("aggro_script")
+RequireLineOfSight = false
+DebugAggro = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AggroComponent"]
 shape = SubResource("CircleShape2D_aggro")
 
-[node name="DropComponent" type="Node" parent="." script=ExtResource("7_h1n5m")]
+[node name="DropComponent" type="Node" parent="."]
+script = ExtResource("drop_script")
 
-[node name="StatusEffectComponent" type="Node" parent="." script=ExtResource("9_e1f2g")]
+[node name="StatusEffectComponent" type="Node" parent="."]
+script = ExtResource("status_script")
 
-[node name="EntityTagComponent" type="Node" parent="." script=ExtResource("10_h3i4j")]
+[node name="EntityTagComponent" type="Node" parent="."]
+script = ExtResource("tag_script")
 Tags = PackedStringArray("corrupted")

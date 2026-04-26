@@ -3,6 +3,7 @@ using Sequence.Components.Aggro;
 using Sequence.Components.Drop;
 using Sequence.Components.Health;
 using Sequence.Components.Hitbox;
+using Sequence.Components.Hurtbox;
 using Sequence.Components.StateMachine;
 using Sequence.Components.Status;
 
@@ -18,9 +19,14 @@ public partial class EnemyBase : CharacterBody2D
 	[Export(PropertyHint.Range, "0.01,5,0.01")] public float AttackCooldownSeconds { get; set; } = 1.1f;
 	[Export(PropertyHint.Range, "0.01,2,0.01")] public float AttackWindupSeconds { get; set; } = 0.15f;
 	[Export(PropertyHint.Range, "0.01,2,0.01")] public float AttackActiveSeconds { get; set; } = 0.12f;
+	[Export(PropertyHint.Range, "0,2000,1")] public float HitKnockbackSpeed { get; set; } = 220f;
+	[Export(PropertyHint.Range, "0,1,0.01")] public float HitStopSeconds { get; set; } = 0.08f;
+	[Export(PropertyHint.Range, "0,1,0.01")] public float FlashSeconds { get; set; } = 0.08f;
+	[Export] public bool DebugCombat { get; set; }
 	[Export] public NodePath? AggroPath { get; set; }
 	[Export] public NodePath? HealthPath { get; set; }
 	[Export] public NodePath? HitboxPath { get; set; }
+	[Export] public NodePath? HurtboxPath { get; set; }
 	[Export] public NodePath? DropPath { get; set; }
 	[Export] public NodePath? StateMachinePath { get; set; }
 	[Export] public PackedScene? MaterialPickupScene { get; set; }
@@ -28,12 +34,18 @@ public partial class EnemyBase : CharacterBody2D
 	private AggroComponent? _aggro;
 	private HealthComponent? _health;
 	private HitboxComponent? _hitbox;
+	private HurtboxComponent? _hurtbox;
 	private DropComponent? _drop;
 	private StateMachineComponent? _fsm;
 	private StatusEffectComponent? _status;
+	private Sprite2D? _sprite;
 	private float _attackCooldownRemaining;
 	private float _attackWindupRemaining;
 	private float _attackActiveRemaining;
+	private float _hitStopRemaining;
+	private float _flashRemaining;
+	private float _debugTimer;
+	private Color _baseModulate = Colors.White;
 
 	public override void _Ready()
 	{
@@ -42,11 +54,25 @@ public partial class EnemyBase : CharacterBody2D
 		_aggro = ResolveNode<AggroComponent>(AggroPath, "AggroComponent");
 		_health = ResolveNode<HealthComponent>(HealthPath, "HealthComponent");
 		_hitbox = ResolveNode<HitboxComponent>(HitboxPath, "HitboxComponent");
+		_hurtbox = ResolveNode<HurtboxComponent>(HurtboxPath, "HurtboxComponent");
 		_drop = ResolveNode<DropComponent>(DropPath, "DropComponent");
 		_fsm = ResolveNode<StateMachineComponent>(StateMachinePath, "StateMachineComponent");
 		_status = GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
+		_sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
+		if (_sprite != null)
+			_baseModulate = _sprite.Modulate;
+
+		var childNames = new System.Text.StringBuilder();
+		foreach (var c in GetChildren())
+		{
+			childNames.Append(c.Name).Append('(').Append(c.GetType().Name).Append(") ");
+		}
+		GD.Print($"[EnemyBase] {Name} _Ready: aggro={(_aggro != null)} health={(_health != null)} hitbox={(_hitbox != null)} hurtbox={(_hurtbox != null)} fsm={(_fsm != null)}");
+		GD.Print($"[EnemyBase] {Name} children: {childNames}");
 
 		RegisterDefaultStates();
+
+		GD.Print($"[EnemyBase] {Name} post-register: state='{_fsm?.CurrentStateName}'");
 
 		if (_aggro != null)
 		{
@@ -57,6 +83,11 @@ public partial class EnemyBase : CharacterBody2D
 		if (_health != null)
 		{
 			_health.Died += OnDied;
+		}
+
+		if (_hurtbox != null)
+		{
+			_hurtbox.HitAccepted += OnHurtboxHit;
 		}
 
 		if (_drop != null)
@@ -83,6 +114,11 @@ public partial class EnemyBase : CharacterBody2D
 			_health.Died -= OnDied;
 		}
 
+		if (_hurtbox != null)
+		{
+			_hurtbox.HitAccepted -= OnHurtboxHit;
+		}
+
 		if (_drop != null)
 		{
 			_drop.DropRequested -= OnDropRequested;
@@ -98,6 +134,7 @@ public partial class EnemyBase : CharacterBody2D
 	{
 		var step = (float)delta;
 		TickAttackTimers(step);
+		TickFlash(step);
 
 		if (_health != null && _health.IsDead)
 		{
@@ -120,8 +157,27 @@ public partial class EnemyBase : CharacterBody2D
 			return;
 		}
 
+		// Hit-stop: let knockback velocity ride out, skip state-driven movement
+		if (_hitStopRemaining > 0f)
+		{
+			_hitStopRemaining -= step;
+			MoveAndSlide();
+			return;
+		}
+
 		var currentState = _fsm?.CurrentStateName ?? string.Empty;
 		var target = _aggro?.CurrentTarget;
+
+		if (DebugCombat)
+		{
+			_debugTimer += step;
+			if (_debugTimer >= 1f)
+			{
+				_debugTimer = 0f;
+				var hasTarget = _aggro?.HasTarget ?? false;
+				GD.Print($"[Enemy] {Name} state={currentState} hasTarget={hasTarget} target={target?.Name ?? "null"} pos={GlobalPosition}");
+			}
+		}
 
 		switch (currentState)
 		{
@@ -130,6 +186,7 @@ public partial class EnemyBase : CharacterBody2D
 				break;
 			case "Attack":
 				Velocity = new Vector2(0f, Velocity.Y);
+				FaceTarget(target);
 				break;
 			case "Death":
 				Velocity = new Vector2(0f, Velocity.Y);
@@ -149,6 +206,47 @@ public partial class EnemyBase : CharacterBody2D
 		MoveAndSlide();
 	}
 
+	private void FaceTarget(Node2D? target)
+	{
+		if (_sprite == null || target == null) return;
+		var dx = target.GlobalPosition.X - GlobalPosition.X;
+		if (Mathf.Abs(dx) < 0.1f) return;
+		_sprite.FlipH = dx < 0f;
+	}
+
+	private void OnHurtboxHit(Node attacker, float damage)
+	{
+		if (DebugCombat)
+		{
+			var hp = _health?.CurrentHp ?? -1f;
+			var max = _health?.MaxHp ?? -1f;
+			GD.Print($"[Enemy] {Name} hit by {attacker?.Name} for {damage}. HP {hp}/{max}");
+		}
+
+		if (attacker is Node2D attackerNode)
+		{
+			float dir = Mathf.Sign(GlobalPosition.X - attackerNode.GlobalPosition.X);
+			if (dir == 0f) dir = 1f;
+			Velocity = new Vector2(dir * HitKnockbackSpeed, -HitKnockbackSpeed * 0.4f);
+		}
+
+		_hitStopRemaining = HitStopSeconds;
+		_flashRemaining = FlashSeconds;
+		if (_sprite != null)
+			_sprite.Modulate = new Color(1.6f, 0.6f, 0.6f, 1f);
+	}
+
+	private void TickFlash(float step)
+	{
+		if (_flashRemaining <= 0f || _sprite == null) return;
+		_flashRemaining -= step;
+		if (_flashRemaining <= 0f)
+		{
+			_flashRemaining = 0f;
+			_sprite.Modulate = _baseModulate;
+		}
+	}
+
 	private void RegisterDefaultStates()
 	{
 		if (_fsm == null)
@@ -164,11 +262,15 @@ public partial class EnemyBase : CharacterBody2D
 
 	private void OnAggroAcquired(Node2D target)
 	{
+		if (DebugCombat)
+			GD.Print($"[Enemy] {Name} aggro acquired → Chase. target={target?.Name}");
 		_fsm?.TransitionNow("Chase");
 	}
 
 	private void OnAggroLost(Node2D? target)
 	{
+		if (DebugCombat)
+			GD.Print($"[Enemy] {Name} aggro lost → Idle");
 		_fsm?.TransitionNow("Idle");
 	}
 
@@ -204,6 +306,8 @@ public partial class EnemyBase : CharacterBody2D
 
 		var offset = target.GlobalPosition - GlobalPosition;
 		var horizontalDistance = Mathf.Abs(offset.X);
+
+		FaceTarget(target);
 
 		if (horizontalDistance <= AttackRange)
 		{

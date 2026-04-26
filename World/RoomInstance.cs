@@ -361,7 +361,7 @@ public partial class RoomInstance : Node2D
 		};
 
 		// Load the enemy template
-		var enemyScene = GD.Load<PackedScene>("res://Entities/Enemies/Enemy.tscn");
+		var enemyScene = GD.Load<PackedScene>("res://Entities/Enemies/GoblinEnemy.tscn");
 		if (enemyScene == null)
 		{
 			GD.PrintErr("[RoomInstance] Failed to load enemy template scene");

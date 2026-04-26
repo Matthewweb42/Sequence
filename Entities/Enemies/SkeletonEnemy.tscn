@@ -1,15 +1,7 @@
-[gd_scene load_steps=16 format=3 uid="uid://c1i15jc1tiox0"]
+[gd_scene load_steps=8 format=3 uid="uid://c1i15jc1tiox0"]
 
 [ext_resource type="Script" uid="uid://bm0inq1kwl2ah" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
-[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_d9k6q"]
-[ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="3_s1m7h"]
-[ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="4_q4b8x"]
-[ext_resource type="Script" path="res://Components/StateMachine/StateMachineComponent.cs" id="5_f2p9t"]
-[ext_resource type="Script" path="res://Components/Aggro/AggroComponent.cs" id="6_r7c3w"]
-[ext_resource type="Script" path="res://Components/Drop/DropComponent.cs" id="7_h1n5m"]
 [ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="8_w2r5y"]
-[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="9_e1f2g"]
-[ext_resource type="Script" path="res://Components/Combat/EntityTagComponent.cs" id="10_h3i4j"]
 [ext_resource type="Texture2D" uid="uid://bqo51ru0wmc8r" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Skeleton/Attack3.png" id="11_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
@@ -25,10 +17,10 @@ radius = 14.0
 radius = 180.0
 
 [node name="SkeletonEnemy" type="CharacterBody2D"]
+collision_layer = 17
+collision_mask = 273
 script = ExtResource("1_u5a2n")
 MaterialPickupScene = ExtResource("8_w2r5y")
-collision_layer = 32
-collision_mask = 273
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
@@ -36,45 +28,40 @@ shape = SubResource("RectangleShape2D_body")
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.6, 1.6)
 texture = ExtResource("11_tex")
 region_enabled = true
 region_rect = Rect2(0, 0, 150, 150)
-scale = Vector2(1.6, 1.6)
 
-[node name="HealthComponent" type="Node" parent="." script=ExtResource("2_d9k6q")]
-MaxHp = 35.0
+[node name="HealthComponent" type="Node" parent="."]
 
-[node name="HurtboxComponent" type="Area2D" parent="." script=ExtResource("3_s1m7h")]
-Team = 2
+[node name="HurtboxComponent" type="Area2D" parent="."]
 collision_layer = 2
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
 shape = SubResource("RectangleShape2D_hurtbox")
 
-[node name="HitboxComponent" type="Area2D" parent="." script=ExtResource("4_q4b8x")]
-Team = 2
+[node name="HitboxComponent" type="Area2D" parent="."]
 collision_layer = 8
-collision_mask = 1
+collision_mask = 128
 monitoring = false
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
 shape = SubResource("CircleShape2D_hitbox")
 
-[node name="StateMachineComponent" type="Node" parent="." script=ExtResource("5_f2p9t")]
+[node name="StateMachineComponent" type="Node" parent="."]
 
-[node name="AggroComponent" type="Area2D" parent="." script=ExtResource("6_r7c3w")]
-RequireLineOfSight = false
+[node name="AggroComponent" type="Area2D" parent="."]
 collision_layer = 64
 collision_mask = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AggroComponent"]
 shape = SubResource("CircleShape2D_aggro")
 
-[node name="DropComponent" type="Node" parent="." script=ExtResource("7_h1n5m")]
+[node name="DropComponent" type="Node" parent="."]
 
-[node name="StatusEffectComponent" type="Node" parent="." script=ExtResource("9_e1f2g")]
+[node name="StatusEffectComponent" type="Node" parent="."]
 
-[node name="EntityTagComponent" type="Node" parent="." script=ExtResource("10_h3i4j")]
-Tags = PackedStringArray("undead")
+[node name="EntityTagComponent" type="Node" parent="."]
