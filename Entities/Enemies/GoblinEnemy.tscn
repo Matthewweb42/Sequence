@@ -22,13 +22,14 @@ size = Vector2(16, 22)
 radius = 14.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_aggro"]
-radius = 180.0
+radius = 500.0
 
 [node name="GoblinEnemy" type="CharacterBody2D"]
 collision_layer = 17
 collision_mask = 273
 script = ExtResource("1_u5a2n")
 DebugCombat = true
+AttackSpriteSheet = ExtResource("11_tex")
 MaterialPickupScene = ExtResource("8_w2r5y")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

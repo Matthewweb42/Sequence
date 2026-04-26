@@ -1,6 +1,7 @@
 using Godot;
 using Sequence.Autoloads;
 using Sequence.Components.Ability;
+using Sequence.Components.Animation;
 using Sequence.Components.Health;
 using Sequence.Components.Hitbox;
 using Sequence.Components.Hurtbox;
@@ -29,6 +30,12 @@ public partial class PlayerController : CharacterBody2D
 	[Export] public NodePath? HitboxPath { get; set; }
 	[Export] public NodePath? AbilityPath { get; set; }
 	[Export] public NodePath? HurtboxPath { get; set; }
+	[Export] public Texture2D? IdleSpriteSheet { get; set; }
+	[Export] public Texture2D? RunSpriteSheet { get; set; }
+	[Export] public Texture2D? AttackSpriteSheet { get; set; }
+	[Export(PropertyHint.Range, "16,512,1")] public int SpriteFrameSize { get; set; } = 192;
+	[Export(PropertyHint.Range, "1,30,1")] public float IdleFps { get; set; } = 10f;
+	[Export(PropertyHint.Range, "1,30,1")] public float RunFps { get; set; } = 12f;
 
 	private HealthComponent? _health;
 	private HitboxComponent? _hitbox;
@@ -37,6 +44,7 @@ public partial class PlayerController : CharacterBody2D
 	private StatusEffectComponent? _status;
 	private Sprite2D? _sprite;
 	private Camera2D? _camera;
+	private SpriteAnimator? _animator;
 	private float _attackWindowRemaining;
 	private float _attackCooldownRemaining;
 	private bool _attackWasPressed;
@@ -55,6 +63,8 @@ public partial class PlayerController : CharacterBody2D
 		_sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
 		_camera = GetNodeOrNull<Camera2D>("Camera2D");
 
+		SetupAnimator();
+
 		if (_health != null)
 			_health.Died += OnDied;
 
@@ -62,6 +72,24 @@ public partial class PlayerController : CharacterBody2D
 			_hurtbox.HitAccepted += OnHurtboxHit;
 
 		ApplyFacingToHitbox();
+	}
+
+	private void SetupAnimator()
+	{
+		if (_sprite == null) return;
+
+		_animator = new SpriteAnimator(_sprite, SpriteFrameSize, SpriteFrameSize);
+
+		if (IdleSpriteSheet != null)
+			_animator.RegisterClip("idle", IdleSpriteSheet, 0, 0, 8, IdleFps, loop: true);
+		if (RunSpriteSheet != null)
+			_animator.RegisterClip("run", RunSpriteSheet, 0, 0, 6, RunFps, loop: true);
+		if (AttackSpriteSheet != null)
+			_animator.RegisterClip("attack", AttackSpriteSheet, 0, 0, 4, defaultFps: 24f, loop: false);
+
+		// Default to idle so the sprite has something on screen even before input.
+		if (IdleSpriteSheet != null)
+			_animator.Play("idle");
 	}
 
 	public override void _ExitTree()
@@ -162,19 +190,43 @@ public partial class PlayerController : CharacterBody2D
 		var attackJustPressed = attackPressed && !_attackWasPressed;
 		_attackWasPressed = attackPressed;
 
+		if (attackJustPressed)
+			GD.Print("[Player] attack input received");
+
 		if (attackJustPressed && _attackCooldownRemaining <= 0f && _attackWindowRemaining <= 0f)
 		{
-			if (_ability == null || _ability.TryActivate("basic_attack", sanityCost: BasicAttackSanityCost))
-			{
-				_hitbox?.ActivateWindow();
-				var atkSpeedMult = _status != null ? _status.GetStat("attack_speed_multiplier", 1f) : 1f;
-				_attackWindowRemaining = AttackWindowSeconds / Mathf.Max(0.1f, atkSpeedMult);
-				_attackCooldownRemaining = AttackCooldownSeconds / Mathf.Max(0.1f, atkSpeedMult);
+			// Basic attack is always free; don't gate it on AbilityComponent unlocks.
+			_hitbox?.ActivateWindow();
+			var atkSpeedMult = _status != null ? _status.GetStat("attack_speed_multiplier", 1f) : 1f;
+			_attackWindowRemaining = AttackWindowSeconds / Mathf.Max(0.1f, atkSpeedMult);
+			_attackCooldownRemaining = AttackCooldownSeconds / Mathf.Max(0.1f, atkSpeedMult);
 
-				if (DebugCombat)
-					GD.Print($"[Player] Swing facing={_facing}");
-			}
+			_animator?.Play("attack", _attackWindowRemaining);
+
+			if (DebugCombat)
+				GD.Print($"[Player] Swing facing={_facing} attackJustPressed={attackJustPressed}");
 		}
+		else if (attackJustPressed && DebugCombat)
+		{
+			GD.Print($"[Player] Attack pressed but blocked: cooldown={_attackCooldownRemaining:F2}s window={_attackWindowRemaining:F2}s");
+		}
+
+		UpdateAnimationState(moveX);
+		_animator?.Tick(step);
+	}
+
+	private void UpdateAnimationState(float moveX)
+	{
+		if (_animator == null) return;
+
+		// Don't override the attack swing while it's still in its window.
+		if (_attackWindowRemaining > 0f && _animator.CurrentClip == "attack")
+			return;
+
+		var moving = Mathf.Abs(moveX) > 0.01f;
+		var desired = moving ? "run" : "idle";
+		if (_animator.CurrentClip != desired)
+			_animator.Play(desired);
 	}
 
 	public void OnAttackWindowStart()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://b22a6fqpkdk66"]
+[gd_scene load_steps=17 format=3 uid="uid://b22a6fqpkdk66"]
 
 [ext_resource type="Script" uid="uid://e5igw64p3dkm" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
 [ext_resource type="Script" uid="uid://csw3twea16j82" path="res://Components/Health/HealthComponent.cs" id="2_health"]
@@ -13,6 +13,8 @@
 [ext_resource type="Script" uid="uid://34v8gbfqtpdu" path="res://Components/Pathway/PathwayComponent.cs" id="11_pathway"]
 [ext_resource type="Script" uid="uid://cneekslb2ey7c" path="res://Entities/Player/BardAbilityHandler.cs" id="12_bard"]
 [ext_resource type="Texture2D" uid="uid://c0xyqdkr0q0m5" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Idle.png" id="16_warrior"]
+[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Run.png" id="17_warrior_run"]
+[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Attack1.png" id="18_warrior_attack"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -31,6 +33,10 @@ collision_layer = 17
 collision_mask = 257
 script = ExtResource("1_k2mn4")
 BasicAttackSanityCost = 0.0
+DebugCombat = true
+IdleSpriteSheet = ExtResource("16_warrior")
+RunSpriteSheet = ExtResource("17_warrior_run")
+AttackSpriteSheet = ExtResource("18_warrior_attack")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
