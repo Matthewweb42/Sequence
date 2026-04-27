@@ -51,6 +51,9 @@ public partial class HealInteractable : Area2D
 
     private void OnBodyEntered(Node2D body)
     {
+        // Mask 1 also overlaps tilemap wall bodies; ignore non-player bodies
+        // so a wall doesn't claim _currentUser and silently block interact.
+        if (!body.IsInGroup("player")) return;
         if (_currentUser == null)
             _currentUser = body;
     }
@@ -63,9 +66,9 @@ public partial class HealInteractable : Area2D
 
     private void OnAreaEntered(Area2D area)
     {
+        if (area.GetParent() is not Node2D owner || !owner.IsInGroup("player")) return;
         if (_currentUser != null) return;
-        if (area.GetParent() is Node2D owner)
-            _currentUser = owner;
+        _currentUser = owner;
     }
 
     private void OnAreaExited(Area2D area)

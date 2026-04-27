@@ -7,10 +7,6 @@
 [node name="BossAntechamberRoom" type="Node2D"]
 script = ExtResource("1_roomins")
 
-[node name="EnemySpawnPoints" type="Node" parent="."]
-
-[node name="MaterialNodes" type="Node" parent="."]
-
 [node name="SequenceDoors" type="Node" parent="."]
 
 [node name="ConnectionPoints" type="Node" parent="."]

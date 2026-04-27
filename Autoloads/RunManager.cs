@@ -145,6 +145,18 @@ public partial class RunManager : Node
 			}
 		}
 
+		// EnemyContainer is a sibling of RoomContainer at world scope, so its
+		// children survive room teardown. Clear them here so leftover enemies
+		// from a combat room don't follow the player into non-combat rooms.
+		var enemyContainer = CurrentWorld.FindChild("EnemyContainer", recursive: false, owned: false) as Node;
+		if (enemyContainer != null)
+		{
+			foreach (Node child in enemyContainer.GetChildren())
+			{
+				child.QueueFree();
+			}
+		}
+
 		// Load the room template based on archetype
 		PackedScene? roomScene = LoadRoomTemplate(roomNode.Archetype);
 		if (roomScene == null)

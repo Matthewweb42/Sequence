@@ -1,0 +1,75 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://UI/Menus/HowToPlayController.cs" id="1_howto"]
+
+[node name="HowToPlay" type="Control"]
+script = ExtResource("1_howto")
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(720, 600)
+theme_override_constants/separation = 24
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+text = "How to Play"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 48
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(720, 480)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Body" type="RichTextLabel" parent="CenterContainer/VBoxContainer/ScrollContainer"]
+custom_minimum_size = Vector2(700, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 22
+text = "[b][font_size=24]Controls[/font_size][/b]
+• Move Left / Right — [code]A[/code] / [code]D[/code]
+• Jump — [code]Space[/code]
+• Attack — [code]Left Mouse Button[/code]
+• Interact / Pick Up — [code]E[/code]
+• Abilities 1–9 — [code]Q[/code], [code]R[/code], [code]T[/code], [code]G[/code], [code]F[/code], [code]V[/code], [code]Z[/code], [code]X[/code], [code]C[/code]
+
+
+[b][font_size=24]Advancing[/font_size][/b]
+You begin at [b]Sequence 9[/b]. To progress, you must drop your Sequence number one tier at a time, all the way down to [b]Sequence 5[/b].
+
+At the end of each branch you'll find a [b]Sequence Shrine[/b]. Stand near it and press [code]E[/code] to advance. Each shrine requires:
+• [b]2 Materials[/b] — found in Material rooms scattered through the world.
+• [b]3 Enemy Drops[/b] — the green pickups left behind by defeated enemies. Walk over and press [code]E[/code] to collect them.
+
+If you don't have enough, the shrine won't activate. Clear more rooms and come back.
+
+
+[b][font_size=24]Sequence Doors[/font_size][/b]
+Branches are walled off by [b]Sequence Doors[/b], each labeled with the Sequence number required to pass through it. A door marked \"Seq 7\" stays locked until you advance to Sequence 7 or lower. Once you advance at a shrine, every door you've earned access to opens automatically.
+
+
+[b][font_size=24]Healing[/font_size][/b]
+Some rooms contain a [b]Heal[/b] interactable. Press [code]E[/code] to fully restore your HP. Each heal can only be used once, so save them for when you really need them.
+
+
+[b][font_size=24]The Goal[/font_size][/b]
+The Sequence 5 branch ends in the [b]Boss Room[/b]. Defeat the three-phase boss to win the run.
+
+If you die at any point, the run ends. Good luck."
+
+[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 48)
+text = "Back"

@@ -27,6 +27,10 @@ theme_override_font_sizes/font_size = 48
 text = "Start"
 custom_minimum_size = Vector2(200, 48)
 
+[node name="HowToPlayButton" type="Button" parent="CenterContainer/VBoxContainer"]
+text = "How to Play"
+custom_minimum_size = Vector2(200, 48)
+
 [node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer"]
 text = "Quit"
 custom_minimum_size = Vector2(200, 48)

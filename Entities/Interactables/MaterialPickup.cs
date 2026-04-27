@@ -15,6 +15,12 @@ public partial class MaterialPickup : Area2D
     [Export(PropertyHint.Range, "1,999,1")] public int Amount { get; set; } = 1;
     [Export] public NodePath? InventoryPath { get; set; }
 
+    /// <summary>
+    /// When true, the pickup is collected the moment the player touches it.
+    /// When false, the player must press the interact key while in range.
+    /// </summary>
+    [Export] public bool AutoCollect { get; set; }
+
     private Node2D? _currentUser;
     private bool _interactWasPressed;
     private bool _isCollected;
@@ -29,7 +35,7 @@ public partial class MaterialPickup : Area2D
 
     public override void _Process(double delta)
     {
-        if (_isCollected)
+        if (_isCollected || AutoCollect)
         {
             return;
         }
@@ -54,6 +60,19 @@ public partial class MaterialPickup : Area2D
 
     private void OnBodyEntered(Node2D body)
     {
+        // Mask 1 also overlaps the tilemap's wall bodies; ignore non-player bodies
+        // so a wall doesn't claim _currentUser and silently block interact.
+        if (!body.IsInGroup("player"))
+        {
+            return;
+        }
+
+        if (AutoCollect)
+        {
+            TryCollectFromNode(body);
+            return;
+        }
+
         if (_currentUser == null)
         {
             _currentUser = body;
@@ -70,12 +89,18 @@ public partial class MaterialPickup : Area2D
 
     private void OnAreaEntered(Area2D area)
     {
-        if (_currentUser != null)
+        if (area.GetParent() is not Node2D owner || !owner.IsInGroup("player"))
         {
             return;
         }
 
-        if (area.GetParent() is Node2D owner)
+        if (AutoCollect)
+        {
+            TryCollectFromNode(owner);
+            return;
+        }
+
+        if (_currentUser == null)
         {
             _currentUser = owner;
         }

@@ -564,17 +564,74 @@ public partial class RoomInstance : Node2D
 				}
 			}
 
-			enemy.GlobalPosition = spawnPosition;
-
-			// Add to world
+			// Add to world first so GetWorld2D() resolves for the overlap query.
 			enemyContainer.AddChild(enemy);
+			enemy.GlobalPosition = ResolveSpawnPosition(enemy, spawnPosition);
 
 			_aliveEnemyCount++;
 
-			GD.Print($"[RoomInstance] Spawned enemy at {spawnPosition}");
+			GD.Print($"[RoomInstance] Spawned enemy at {enemy.GlobalPosition}");
 		}
 
 		GD.Print($"[RoomInstance] Spawned {_aliveEnemyCount} enemies for room {RoomId}");
+	}
+
+	// Cardinal + diagonal nudge directions used to walk out of wall overlaps.
+	private static readonly Vector2[] NudgeDirections = new[]
+	{
+		Vector2.Zero,
+		Vector2.Up, Vector2.Down, Vector2.Left, Vector2.Right,
+		new Vector2(1, 1).Normalized(), new Vector2(-1, 1).Normalized(),
+		new Vector2(1, -1).Normalized(), new Vector2(-1, -1).Normalized(),
+	};
+
+	/// <summary>
+	/// Returns a position near <paramref name="candidate"/> where the enemy's body
+	/// shape doesn't overlap world-tile collision (layer 1). Walks outward in
+	/// 16 px steps; falls back to the original candidate if nothing clears.
+	/// </summary>
+	private Vector2 ResolveSpawnPosition(CharacterBody2D enemy, Vector2 candidate)
+	{
+		var bodyShape = enemy.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		if (bodyShape?.Shape == null)
+		{
+			return candidate;
+		}
+
+		var space = GetWorld2D()?.DirectSpaceState;
+		if (space == null)
+		{
+			return candidate;
+		}
+
+		var query = new PhysicsShapeQueryParameters2D
+		{
+			Shape = bodyShape.Shape,
+			Transform = new Transform2D(0, candidate),
+			CollisionMask = 1,
+			CollideWithBodies = true,
+			CollideWithAreas = false,
+		};
+
+		// Skip the enemy itself in case it's already in the tree.
+		query.Exclude = new Godot.Collections.Array<Rid> { enemy.GetRid() };
+
+		for (int step = 0; step <= 6; step++)
+		{
+			float radius = step * 16f;
+			foreach (var dir in NudgeDirections)
+			{
+				var test = candidate + dir * radius;
+				query.Transform = new Transform2D(0, test);
+				if (space.IntersectShape(query, maxResults: 1).Count == 0)
+				{
+					return test;
+				}
+			}
+		}
+
+		GD.PrintErr($"[RoomInstance] No clear spawn position near {candidate}; using original.");
+		return candidate;
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════════════

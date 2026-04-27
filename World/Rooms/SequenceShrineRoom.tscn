@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://dtpslc1kuiaw6" path="res://World/RoomInstance.cs" id="1_roomins"]
 [ext_resource type="PackedScene" uid="uid://cnnato8i6uphq" path="res://World/Rooms/Connection.tscn" id="1_rqw78"]
 [ext_resource type="Texture2D" uid="uid://c0qr0lgpp4aan" path="res://Assets/Tiny Swords/Final/Salt.png" id="2_lti4l"]
-[ext_resource type="PackedScene" path="res://Entities/Interactables/SequenceShrine.tscn" id="3_shrine"]
+[ext_resource type="PackedScene" uid="uid://bhnyl3b0ooxvl" path="res://Entities/Interactables/SequenceShrine.tscn" id="3_shrine"]
 
 [node name="SequenceShrineRoom" type="Node2D"]
 script = ExtResource("1_roomins")
@@ -22,10 +22,6 @@ position = Vector2(440, -25)
 
 [node name="West" parent="ConnectionPoints" instance=ExtResource("1_rqw78")]
 position = Vector2(-353, -39)
-
-[node name="EnemySpawnPoints" type="Node" parent="."]
-
-[node name="MaterialNodes" type="Node" parent="."]
 
 [node name="SequenceDoors" type="Node" parent="."]
 
