@@ -448,8 +448,10 @@ public partial class EnemyBase : CharacterBody2D
 
 		var pickup = MaterialPickupScene.Instantiate<Node2D>();
 		pickup.Name = "MaterialPickup";
-		root.AddChild(pickup);
-		pickup.GlobalPosition = worldPosition;
+		// Deferred to avoid "can't change state while flushing queries" when called
+		// from inside a physics signal (hitbox → hurtbox → health → drop chain).
+		pickup.Position = worldPosition;
+		root.CallDeferred(Node.MethodName.AddChild, pickup);
 	}
 
 	private T? ResolveNode<T>(NodePath? path, string fallbackName) where T : Node

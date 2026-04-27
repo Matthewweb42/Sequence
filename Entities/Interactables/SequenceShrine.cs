@@ -15,7 +15,7 @@ public partial class SequenceShrine : Area2D
     [Export] public bool SingleUse { get; set; } = true;
     [Export] public NodePath? SequencePath { get; set; }
     [Export] public string MaterialId { get; set; } = "basic_essence";
-    [Export(PropertyHint.Range, "0,99,1")] public int RequiredMaterialAmount { get; set; } = 1;
+    [Export(PropertyHint.Range, "0,99,1")] public int RequiredMaterialAmount { get; set; } = 2;
     [Export] public NodePath? InventoryPath { get; set; }
 
     private Node2D? _currentUser;

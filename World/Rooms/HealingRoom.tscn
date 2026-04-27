@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://drtc8141aafpa" path="res://Entities/Interactables/HealInteractable.cs" id="5_healint"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_heal"]
-radius = 20.0
+radius = 67.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_coscw"]
 atlas = ExtResource("2_ewi10")
@@ -119,6 +119,7 @@ position = Vector2(-353, -39)
 
 [node name="HealInteractable" type="Area2D" parent="."]
 collision_layer = 128
+collision_mask = 1
 script = ExtResource("5_healint")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HealInteractable"]
@@ -127,7 +128,7 @@ shape = SubResource("CircleShape2D_heal")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="HealInteractable"]
 sprite_frames = SubResource("SpriteFrames_vf2jd")
 animation = &"new_animation"
-frame_progress = 0.65783715
+frame_progress = 0.6518143
 
 [node name="Layer0" type="TileMapLayer" parent="."]
 use_parent_material = true

@@ -4,15 +4,16 @@
 [ext_resource type="Script" uid="uid://cy8u4umjnnutx" path="res://Entities/Interactables/DoorTransitionHandler.cs" id="2_doorhandler"]
 
 [sub_resource type="RectangleShape2D" id="connectionpoint_collision"]
-size = Vector2(40, 40)
+size = Vector2(70, 111)
 
 [node name="North" type="Area2D"]
 collision_layer = 0
 collision_mask = 16
 script = ExtResource("2_doorhandler")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("connectionpoint_collision")
-
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_os07b")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(1, 20.5)
+shape = SubResource("connectionpoint_collision")
