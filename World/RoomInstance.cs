@@ -468,6 +468,19 @@ public partial class RoomInstance : Node2D
 			GD.Print($"[RoomInstance] Room {RoomId} ({Archetype}) cleared!");
 		}
 
+		if (Archetype == RoomArchetype.BossRoom)
+		{
+			var timer = GetTree()?.CreateTimer(2.0);
+			if (timer != null)
+			{
+				timer.Timeout += () => RunManager.Instance?.EndRun(isVictory: true);
+			}
+			else
+			{
+				RunManager.Instance?.EndRun(isVictory: true);
+			}
+		}
+
 		// TODO: Disable/hide enemy spawn points, trigger visual celebration, unlock doors, etc.
 	}
 
