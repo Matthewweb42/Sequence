@@ -60,6 +60,9 @@ public partial class RoomInstance : Node2D
 	/// <summary>The shrine in this room, if archetype is SequenceShrine.</summary>
 	private SequenceShrine? _shrine;
 
+	/// <summary>The heal interactable in this room, if archetype is Healing.</summary>
+	private HealInteractable? _heal;
+
 	/// <summary>
 	/// Node containing all enemy spawn points (for visual debugging or configurability).
 	/// </summary>
@@ -101,7 +104,29 @@ public partial class RoomInstance : Node2D
 		if (_shrine != null)
 		{
 			_shrine.ShrineUsed += OnShrineUsed;
+
+			var roomNode = RoomGraph.Instance?.GetRoom(RoomId);
+			if (roomNode?.IsShrineUsed == true)
+			{
+				_shrine.QueueFree();
+				_shrine = null;
+			}
 		}
+
+		if (_heal != null)
+		{
+			_heal.HealUsed += OnHealUsed;
+
+			var roomNode = RoomGraph.Instance?.GetRoom(RoomId);
+			if (roomNode?.IsHealingUsed == true)
+			{
+				_heal.QueueFree();
+				_heal = null;
+			}
+		}
+
+		// Remove already-collected material pickups and track new ones
+		ApplyCollectedMaterialState();
 
 		// Count initial enemies in the room
 		CountEnemies();
@@ -122,6 +147,11 @@ public partial class RoomInstance : Node2D
 		{
 			_shrine.ShrineUsed -= OnShrineUsed;
 		}
+
+		if (_heal != null)
+		{
+			_heal.HealUsed -= OnHealUsed;
+		}
 	}
 
 	private void OnShrineUsed(Node user, int newSequence)
@@ -132,6 +162,15 @@ public partial class RoomInstance : Node2D
 			node.IsShrineUsed = true;
 		}
 		SignalBus.Instance?.PublishShrineConsumed(RoomId);
+	}
+
+	private void OnHealUsed(Node _)
+	{
+		var node = RoomGraph.Instance?.GetRoom(RoomId);
+		if (node != null)
+		{
+			node.IsHealingUsed = true;
+		}
 	}
 
 	// ═══════════════════════════════════════════════════════════════════════════════════
@@ -169,6 +208,9 @@ public partial class RoomInstance : Node2D
 
 		// Cache shrine if present (recursive type search)
 		_shrine = FindShrineRecursive(this);
+
+		// Cache heal interactable if present
+		_heal = FindHealInteractableRecursive(this);
 	}
 
 	private static SequenceShrine? FindShrineRecursive(Node parent)
@@ -178,6 +220,19 @@ public partial class RoomInstance : Node2D
 			if (child is SequenceShrine shrine)
 				return shrine;
 			var found = FindShrineRecursive(child);
+			if (found != null)
+				return found;
+		}
+		return null;
+	}
+
+	private static HealInteractable? FindHealInteractableRecursive(Node parent)
+	{
+		foreach (Node child in parent.GetChildren())
+		{
+			if (child is HealInteractable heal)
+				return heal;
+			var found = FindHealInteractableRecursive(child);
 			if (found != null)
 				return found;
 		}
@@ -368,6 +423,35 @@ public partial class RoomInstance : Node2D
 	/// <summary>
 	/// Mark this room as cleared and emit the RoomCleared signal via SignalBus.
 	/// </summary>
+	private void ApplyCollectedMaterialState()
+	{
+		if (_materialNodes == null) return;
+
+		var roomNode = RoomGraph.Instance?.GetRoom(RoomId);
+
+		foreach (Node child in _materialNodes.GetChildren())
+		{
+			var nodeName = child.Name.ToString();
+
+			if (roomNode != null && roomNode.CollectedMaterialNodes.Contains(nodeName))
+			{
+				child.QueueFree();
+				continue;
+			}
+
+			if (child is MaterialPickup pickup)
+			{
+				pickup.Collected += (_, _, _) => OnMaterialNodeCollected(nodeName);
+			}
+		}
+	}
+
+	private void OnMaterialNodeCollected(string nodeName)
+	{
+		var roomNode = RoomGraph.Instance?.GetRoom(RoomId);
+		roomNode?.CollectedMaterialNodes.Add(nodeName);
+	}
+
 	private void MarkRoomAsCleared()
 	{
 		if (IsCleared)

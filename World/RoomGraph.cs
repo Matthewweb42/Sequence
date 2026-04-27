@@ -82,6 +82,11 @@ public class RoomNode
     /// <summary>Whether the shrine in this room has been consumed (only meaningful for SequenceShrine archetype).</summary>
     public bool IsShrineUsed { get; set; }
 
+    public bool IsHealingUsed { get; set; }
+
+    /// <summary>Names of material pickup nodes that have already been collected this run.</summary>
+    public HashSet<string> CollectedMaterialNodes { get; set; } = new();
+
     /// <summary>
     /// Adjacency list: maps a neighbouring RoomNode to the DoorInfo
     /// that separates them (null if the connection is always open).

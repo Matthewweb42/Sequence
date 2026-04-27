@@ -1,5 +1,6 @@
 using Godot;
 using Sequence.Autoloads;
+using Sequence.Components.Inventory;
 using Sequence.Components.Sequence;
 
 namespace Sequence.Entities.Interactables;
@@ -13,6 +14,9 @@ public partial class SequenceShrine : Area2D
 
     [Export] public bool SingleUse { get; set; } = true;
     [Export] public NodePath? SequencePath { get; set; }
+    [Export] public string MaterialId { get; set; } = "basic_essence";
+    [Export(PropertyHint.Range, "0,99,1")] public int RequiredMaterialAmount { get; set; } = 1;
+    [Export] public NodePath? InventoryPath { get; set; }
 
     private Node2D? _currentUser;
     private bool _interactWasPressed;
@@ -46,6 +50,15 @@ public partial class SequenceShrine : Area2D
         if (!interactJustPressed)
         {
             return;
+        }
+
+        if (RequiredMaterialAmount > 0 && !string.IsNullOrWhiteSpace(MaterialId))
+        {
+            var inventory = ResolveInventory(_currentUser);
+            if (inventory == null || !inventory.TryConsumeMaterial(MaterialId, RequiredMaterialAmount))
+            {
+                return;
+            }
         }
 
         var sequence = ResolveSequence(_currentUser);
@@ -109,6 +122,16 @@ public partial class SequenceShrine : Area2D
         {
             _currentUser = null;
         }
+    }
+
+    private InventoryComponent? ResolveInventory(Node user)
+    {
+        if (InventoryPath != null && !InventoryPath.IsEmpty)
+        {
+            return GetNodeOrNull<InventoryComponent>(InventoryPath);
+        }
+
+        return user.GetNodeOrNull<InventoryComponent>("InventoryComponent");
     }
 
     private SequenceComponent? ResolveSequence(Node user)

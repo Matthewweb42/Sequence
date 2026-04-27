@@ -14,6 +14,7 @@ public partial class MiniMap : Control
 
     public override void _Ready()
     {
+        ClipContents = true;
         Subscribe();
     }
 
