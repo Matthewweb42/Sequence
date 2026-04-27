@@ -14,8 +14,10 @@ public partial class SequenceShrine : Area2D
 
     [Export] public bool SingleUse { get; set; } = true;
     [Export] public NodePath? SequencePath { get; set; }
-    [Export] public string MaterialId { get; set; } = "basic_essence";
+    [Export] public string MaterialId { get; set; } = "material";
     [Export(PropertyHint.Range, "0,99,1")] public int RequiredMaterialAmount { get; set; } = 2;
+    [Export] public string EnemyDropId { get; set; } = "enemy_drop";
+    [Export(PropertyHint.Range, "0,99,1")] public int RequiredEnemyDropAmount { get; set; } = 3;
     [Export] public NodePath? InventoryPath { get; set; }
 
     private Node2D? _currentUser;
@@ -52,13 +54,10 @@ public partial class SequenceShrine : Area2D
             return;
         }
 
-        if (RequiredMaterialAmount > 0 && !string.IsNullOrWhiteSpace(MaterialId))
+        var inventory = ResolveInventory(_currentUser);
+        if (!TryConsumeRequirements(inventory))
         {
-            var inventory = ResolveInventory(_currentUser);
-            if (inventory == null || !inventory.TryConsumeMaterial(MaterialId, RequiredMaterialAmount))
-            {
-                return;
-            }
+            return;
         }
 
         var sequence = ResolveSequence(_currentUser);
@@ -85,6 +84,44 @@ public partial class SequenceShrine : Area2D
             Monitoring = false;
             Monitorable = false;
         }
+    }
+
+    private bool TryConsumeRequirements(InventoryComponent? inventory)
+    {
+        var needsMaterial = RequiredMaterialAmount > 0 && !string.IsNullOrWhiteSpace(MaterialId);
+        var needsDrops = RequiredEnemyDropAmount > 0 && !string.IsNullOrWhiteSpace(EnemyDropId);
+
+        if (!needsMaterial && !needsDrops)
+        {
+            return true;
+        }
+
+        if (inventory == null)
+        {
+            return false;
+        }
+
+        if (needsMaterial && inventory.GetMaterialCount(MaterialId) < RequiredMaterialAmount)
+        {
+            return false;
+        }
+
+        if (needsDrops && inventory.GetMaterialCount(EnemyDropId) < RequiredEnemyDropAmount)
+        {
+            return false;
+        }
+
+        if (needsMaterial && !inventory.TryConsumeMaterial(MaterialId, RequiredMaterialAmount))
+        {
+            return false;
+        }
+
+        if (needsDrops && !inventory.TryConsumeMaterial(EnemyDropId, RequiredEnemyDropAmount))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void OnBodyEntered(Node2D body)

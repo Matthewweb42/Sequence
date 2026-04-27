@@ -24,7 +24,10 @@ text = "Sanity: -"
 text = "Sequence: -"
 
 [node name="EssenceLabel" type="Label" parent="DebugPanel/VBox"]
-text = "basic_essence: 0"
+text = "material: 0"
+
+[node name="EnemyDropLabel" type="Label" parent="DebugPanel/VBox"]
+text = "enemy_drop: 0"
 
 [node name="RunStatusLabel" type="Label" parent="DebugPanel/VBox"]
 text = "Run: Active"

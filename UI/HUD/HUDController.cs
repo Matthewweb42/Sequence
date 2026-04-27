@@ -17,12 +17,14 @@ public partial class HUDController : CanvasLayer
 	[Export] public NodePath SanityLabelPath { get; set; } = new("DebugPanel/VBox/SanityLabel");
 	[Export] public NodePath SequenceLabelPath { get; set; } = new("DebugPanel/VBox/SequenceLabel");
 	[Export] public NodePath EssenceLabelPath { get; set; } = new("DebugPanel/VBox/EssenceLabel");
+	[Export] public NodePath EnemyDropLabelPath { get; set; } = new("DebugPanel/VBox/EnemyDropLabel");
 	[Export] public NodePath RunStatusLabelPath { get; set; } = new("DebugPanel/VBox/RunStatusLabel");
 
 	private Label? _hpLabel;
 	private Label? _sanityLabel;
 	private Label? _sequenceLabel;
 	private Label? _essenceLabel;
+	private Label? _enemyDropLabel;
 	private Label? _runStatusLabel;
 
 	private HealthComponent? _health;
@@ -39,6 +41,7 @@ public partial class HUDController : CanvasLayer
 		_sanityLabel = GetNodeOrNull<Label>(SanityLabelPath);
 		_sequenceLabel = GetNodeOrNull<Label>(SequenceLabelPath);
 		_essenceLabel = GetNodeOrNull<Label>(EssenceLabelPath);
+		_enemyDropLabel = GetNodeOrNull<Label>(EnemyDropLabelPath);
 		_runStatusLabel = GetNodeOrNull<Label>(RunStatusLabelPath);
 
 		SubscribeRunManager();
@@ -180,8 +183,14 @@ public partial class HUDController : CanvasLayer
 
 		if (_essenceLabel != null)
 		{
-			var count = _inventory?.GetMaterialCount("basic_essence") ?? 0;
-			_essenceLabel.Text = $"basic_essence: {count}";
+			var count = _inventory?.GetMaterialCount("material") ?? 0;
+			_essenceLabel.Text = $"material: {count}";
+		}
+
+		if (_enemyDropLabel != null)
+		{
+			var count = _inventory?.GetMaterialCount("enemy_drop") ?? 0;
+			_enemyDropLabel.Text = $"enemy_drop: {count}";
 		}
 
 		if (_runStatusLabel != null)
@@ -282,7 +291,7 @@ public partial class HUDController : CanvasLayer
 
 	private void OnMaterialChanged(string materialId, int newAmount)
 	{
-		if (materialId == "basic_essence")
+		if (materialId == "material" || materialId == "enemy_drop")
 		{
 			UpdateDisplay();
 		}

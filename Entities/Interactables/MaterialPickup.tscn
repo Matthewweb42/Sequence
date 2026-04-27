@@ -9,6 +9,7 @@ radius = 9.0
 script = ExtResource("1_x8m4p")
 collision_layer = 128
 collision_mask = 1
+MaterialId = "enemy_drop"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_pickup")
