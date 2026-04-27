@@ -1,16 +1,20 @@
-[gd_scene load_steps=15 format=3 uid="uid://b22a6fqpkdk66"]
+[gd_scene load_steps=17 format=3 uid="uid://b22a6fqpkdk66"]
 
 [ext_resource type="Script" uid="uid://e5igw64p3dkm" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
+[ext_resource type="Script" uid="uid://csw3twea16j82" path="res://Components/Health/HealthComponent.cs" id="2_health"]
+[ext_resource type="Script" uid="uid://dr2241tum56w6" path="res://Components/Sanity/SanityComponent.cs" id="3_sanity"]
+[ext_resource type="Script" uid="uid://fhcpxanu07wr" path="res://Components/Hurtbox/HurtboxComponent.cs" id="4_hurtbox"]
+[ext_resource type="Script" uid="uid://daewu2ktolrur" path="res://Components/Hitbox/HitboxComponent.cs" id="5_hitbox"]
+[ext_resource type="Script" uid="uid://cgyucweltd27i" path="res://Components/Sequence/SequenceComponent.cs" id="6_sequence"]
+[ext_resource type="Script" uid="uid://bl2bjulovgnnc" path="res://Components/Inventory/InventoryComponent.cs" id="7_inventory"]
+[ext_resource type="Script" uid="uid://35x3d1tvixlv" path="res://Components/Ability/AbilityComponent.cs" id="8_ability"]
+[ext_resource type="Script" uid="uid://btq7sxfpywwqv" path="res://Components/Status/StatusEffectComponent.cs" id="9_status"]
+[ext_resource type="Script" uid="uid://cv0iux1n7mrtl" path="res://Components/Ability/ChannelComponent.cs" id="10_channel"]
+[ext_resource type="Script" uid="uid://34v8gbfqtpdu" path="res://Components/Pathway/PathwayComponent.cs" id="11_pathway"]
+[ext_resource type="Script" uid="uid://cneekslb2ey7c" path="res://Entities/Player/BardAbilityHandler.cs" id="12_bard"]
 [ext_resource type="Texture2D" uid="uid://c0xyqdkr0q0m5" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Idle.png" id="16_warrior"]
-[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="2_health"]
-[ext_resource type="Script" path="res://Components/Sanity/SanityComponent.cs" id="3_sanity"]
-[ext_resource type="Script" path="res://Components/Sequence/SequenceComponent.cs" id="4_sequence"]
-[ext_resource type="Script" path="res://Components/Inventory/InventoryComponent.cs" id="5_inventory"]
-[ext_resource type="Script" path="res://Components/Ability/AbilityComponent.cs" id="6_ability"]
-[ext_resource type="Script" path="res://Components/Ability/ChannelComponent.cs" id="7_channel"]
-[ext_resource type="Script" path="res://Components/Pathway/PathwayComponent.cs" id="8_pathway"]
-[ext_resource type="Script" path="res://Entities/Player/BardAbilityHandler.cs" id="9_bard"]
-[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="10_status"]
+[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Run.png" id="17_warrior_run"]
+[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Attack1.png" id="18_warrior_attack"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -24,10 +28,15 @@ radius = 16.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_aoe"]
 radius = 200.0
 
-[node name="Player" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D" groups=["player"]]
 collision_layer = 17
 collision_mask = 257
 script = ExtResource("1_k2mn4")
+BasicAttackSanityCost = 0.0
+DebugCombat = true
+IdleSpriteSheet = ExtResource("16_warrior")
+RunSpriteSheet = ExtResource("17_warrior_run")
+AttackSpriteSheet = ExtResource("18_warrior_attack")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
@@ -44,12 +53,16 @@ region_rect = Rect2(0, 0, 192, 192)
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("2_health")
+MaxHp = 100.0
 
 [node name="SanityComponent" type="Node" parent="."]
 script = ExtResource("3_sanity")
 
 [node name="HurtboxComponent" type="Area2D" parent="."]
-collision_mask = 128
+collision_layer = 128
+collision_mask = 8
+script = ExtResource("4_hurtbox")
+Team = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
 shape = SubResource("RectangleShape2D_hurtbox")
@@ -59,6 +72,9 @@ collision_layer = 4
 collision_mask = 2
 monitoring = false
 monitorable = false
+script = ExtResource("5_hitbox")
+Damage = 10.0
+Team = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
 shape = SubResource("CircleShape2D_hitbox")
@@ -68,27 +84,30 @@ collision_layer = 4
 collision_mask = 2
 monitoring = false
 monitorable = false
+script = ExtResource("5_hitbox")
+Damage = 5.0
+Team = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AoEHitboxComponent"]
 shape = SubResource("CircleShape2D_aoe")
 
 [node name="SequenceComponent" type="Node" parent="."]
-script = ExtResource("4_sequence")
+script = ExtResource("6_sequence")
 
 [node name="InventoryComponent" type="Node" parent="."]
-script = ExtResource("5_inventory")
+script = ExtResource("7_inventory")
 
 [node name="AbilityComponent" type="Node" parent="."]
-script = ExtResource("6_ability")
+script = ExtResource("8_ability")
 
 [node name="StatusEffectComponent" type="Node" parent="."]
-script = ExtResource("10_status")
+script = ExtResource("9_status")
 
 [node name="ChannelComponent" type="Node" parent="."]
-script = ExtResource("7_channel")
+script = ExtResource("10_channel")
 
 [node name="PathwayComponent" type="Node" parent="."]
-script = ExtResource("8_pathway")
+script = ExtResource("11_pathway")
 
 [node name="BardAbilityHandler" type="Node" parent="."]
-script = ExtResource("9_bard")
+script = ExtResource("12_bard")

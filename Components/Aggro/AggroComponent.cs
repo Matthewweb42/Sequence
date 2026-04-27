@@ -17,9 +17,12 @@ public partial class AggroComponent : Area2D
 	[Export(PropertyHint.Layers2DPhysics)] public uint OcclusionMask { get; set; } = uint.MaxValue;
 	[Export] public NodePath? ExplicitTargetPath { get; set; }
 
+	[Export] public bool DebugAggro { get; set; }
+
 	private readonly HashSet<Node2D> _candidates = new();
 	private Node2D? _currentTarget;
 	private float _timeSinceLastSeen;
+	private bool _seeded;
 
 	public bool HasTarget => _currentTarget != null;
 	public Node2D? CurrentTarget => _currentTarget;
@@ -30,7 +33,8 @@ public partial class AggroComponent : Area2D
 		BodyExited += OnBodyExited;
 		AreaEntered += OnAreaEntered;
 		AreaExited += OnAreaExited;
-		CallDeferred(nameof(SeedInitialCandidates));
+
+		GD.Print($"[Aggro] _Ready for {GetParent()?.Name}. layer={CollisionLayer} mask={CollisionMask} monitoring={Monitoring} DebugAggro={DebugAggro}");
 
 		if (ExplicitTargetPath != null && !ExplicitTargetPath.IsEmpty)
 		{
@@ -42,6 +46,23 @@ public partial class AggroComponent : Area2D
 		}
 	}
 
+	private void SeedFromPlayerGroup()
+	{
+		var radius = GetFirstShapeRadius();
+		if (radius <= 0f) return;
+
+		foreach (var node in GetTree().GetNodesInGroup("player"))
+		{
+			if (node is Node2D node2D &&
+				node2D.GlobalPosition.DistanceTo(GlobalPosition) <= radius)
+			{
+				_candidates.Add(node2D);
+				if (DebugAggro)
+					GD.Print($"[Aggro] {GetParent()?.Name} seeded player {node2D.Name} via group fallback. dist={node2D.GlobalPosition.DistanceTo(GlobalPosition):F1} radius={radius}");
+			}
+		}
+	}
+
 	private void SeedInitialCandidates()
 	{
 		foreach (var body in GetOverlappingBodies())
@@ -49,6 +70,8 @@ public partial class AggroComponent : Area2D
 			if (body is Node2D node)
 			{
 				_candidates.Add(node);
+				if (DebugAggro)
+					GD.Print($"[Aggro] {GetParent()?.Name} seeded body {node.Name}");
 			}
 		}
 
@@ -57,12 +80,41 @@ public partial class AggroComponent : Area2D
 			if (area is Node2D node)
 			{
 				_candidates.Add(node);
+				if (DebugAggro)
+					GD.Print($"[Aggro] {GetParent()?.Name} seeded area {node.Name}");
 			}
 		}
+
+		if (_candidates.Count == 0)
+		{
+			SeedFromPlayerGroup();
+		}
+	}
+
+	private float GetFirstShapeRadius()
+	{
+		foreach (var child in GetChildren())
+		{
+			if (child is CollisionShape2D shape && shape.Shape is CircleShape2D circle)
+			{
+				return circle.Radius;
+			}
+		}
+		return 0f;
 	}
 
 	public override void _Process(double delta)
 	{
+		// Seed on the very first _Process tick — physics has run at least once by
+		// then so overlaps are populated; if not, the group fallback picks it up.
+		if (!_seeded)
+		{
+			_seeded = true;
+			SeedInitialCandidates();
+			if (DebugAggro)
+				GD.Print($"[Aggro] {GetParent()?.Name} seeded; candidates={_candidates.Count}");
+		}
+
 		var step = (float)delta;
 		var visibleTarget = ResolveVisibleTarget();
 
@@ -75,6 +127,13 @@ public partial class AggroComponent : Area2D
 			}
 
 			return;
+		}
+
+		// Re-scan for the player on every tick if we have no target yet.
+		// Covers the case where the player is added to the scene after the enemy.
+		if (_currentTarget == null && _candidates.Count == 0)
+		{
+			SeedFromPlayerGroup();
 		}
 
 		if (_currentTarget == null)

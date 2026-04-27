@@ -36,7 +36,7 @@ public partial class RoomInstance : Node2D
 	/// to immediately detect and chase the player.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,2000,1")]
-	public float EnemySpawnAggroDistanceCap { get; set; } = 150f;
+	public float EnemySpawnAggroDistanceCap { get; set; } = 0f;
 
 	// ─────────────────────────────────────────────
 	//  Runtime State
@@ -494,21 +494,22 @@ public partial class RoomInstance : Node2D
 			return;
 		}
 
+		// One of each enemy archetype, in a fixed order.
+		var enemyScenePaths = new[]
+		{
+			"res://Entities/Enemies/GoblinEnemy.tscn",
+			"res://Entities/Enemies/SkeletonEnemy.tscn",
+			"res://Entities/Enemies/MushroomEnemy.tscn",
+			"res://Entities/Enemies/FlyingEyeEnemy.tscn",
+		};
+
 		// Determine how many enemies to spawn based on archetype
 		int enemyCount = Archetype switch
 		{
-			RoomArchetype.Combat => 2 + (int)(GD.Randi() % 3), // 2-4 enemies
+			RoomArchetype.Combat => enemyScenePaths.Length, // one of each
 			RoomArchetype.BossRoom => 1, // Single boss
 			_ => 0,
 		};
-
-		// Load the enemy template
-		var enemyScene = GD.Load<PackedScene>("res://Entities/Enemies/Enemy.tscn");
-		if (enemyScene == null)
-		{
-			GD.PrintErr("[RoomInstance] Failed to load enemy template scene");
-			return;
-		}
 
 		// Get EnemyContainer from RunManager's CurrentWorld
 		var runManager = RunManager.Instance;
@@ -536,11 +537,19 @@ public partial class RoomInstance : Node2D
 				continue;
 			}
 
+			var scenePath = enemyScenePaths[i % enemyScenePaths.Length];
+			var enemyScene = GD.Load<PackedScene>(scenePath);
+			if (enemyScene == null)
+			{
+				GD.PrintErr($"[RoomInstance] Failed to load enemy scene {scenePath}");
+				continue;
+			}
+
 			// Instantiate enemy
 			var enemy = enemyScene.Instantiate<CharacterBody2D>();
 			if (enemy == null)
 			{
-				GD.PrintErr("[RoomInstance] Failed to instantiate enemy");
+				GD.PrintErr($"[RoomInstance] Failed to instantiate enemy from {scenePath}");
 				continue;
 			}
 
