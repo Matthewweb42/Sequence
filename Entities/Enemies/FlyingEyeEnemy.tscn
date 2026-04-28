@@ -30,6 +30,9 @@ collision_mask = 273
 script = ExtResource("1_u5a2n")
 MaterialPickupScene = ExtResource("8_w2r5y")
 AttackSpriteSheet = ExtResource("11_tex")
+UseGravity = false
+AttackRange = 40.0
+DebugCombat = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")

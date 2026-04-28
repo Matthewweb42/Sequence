@@ -23,12 +23,22 @@ public partial class AggroComponent : Area2D
 	private Node2D? _currentTarget;
 	private float _timeSinceLastSeen;
 	private bool _seeded;
+	private Node? _ownerNode;
 
 	public bool HasTarget => _currentTarget != null;
 	public Node2D? CurrentTarget => _currentTarget;
 
 	public override void _Ready()
 	{
+		_ownerNode = GetParent();
+
+		// Reset seeding state on every _Ready — handles room transitions where
+		// the enemy node is re-added to a new scene tree.
+		_seeded = false;
+		_candidates.Clear();
+		_currentTarget = null;
+		_timeSinceLastSeen = 0f;
+
 		BodyEntered += OnBodyEntered;
 		BodyExited += OnBodyExited;
 		AreaEntered += OnAreaEntered;
@@ -63,11 +73,19 @@ public partial class AggroComponent : Area2D
 		}
 	}
 
+	private bool IsValidTarget(Node2D node)
+	{
+		// Never target self or own parent.
+		if (node == this || node == _ownerNode) return false;
+		// Only target nodes in the player group.
+		return node.IsInGroup("player");
+	}
+
 	private void SeedInitialCandidates()
 	{
 		foreach (var body in GetOverlappingBodies())
 		{
-			if (body is Node2D node)
+			if (body is Node2D node && IsValidTarget(node))
 			{
 				_candidates.Add(node);
 				if (DebugAggro)
@@ -77,7 +95,7 @@ public partial class AggroComponent : Area2D
 
 		foreach (var area in GetOverlappingAreas())
 		{
-			if (area is Node2D node)
+			if (area is Node2D node && IsValidTarget(node))
 			{
 				_candidates.Add(node);
 				if (DebugAggro)
@@ -214,7 +232,8 @@ public partial class AggroComponent : Area2D
 
 	private void OnBodyEntered(Node2D body)
 	{
-		_candidates.Add(body);
+		if (IsValidTarget(body))
+			_candidates.Add(body);
 	}
 
 	private void OnBodyExited(Node2D body)
@@ -228,7 +247,7 @@ public partial class AggroComponent : Area2D
 
 	private void OnAreaEntered(Area2D area)
 	{
-		if (area is Node2D node)
+		if (area is Node2D node && IsValidTarget(node))
 		{
 			_candidates.Add(node);
 		}

@@ -7,6 +7,7 @@ using Sequence.Components.Hitbox;
 using Sequence.Components.Hurtbox;
 using Sequence.Components.StateMachine;
 using Sequence.Components.Status;
+using Sequence.Entities.Projectiles;
 
 namespace Sequence.Entities.Enemies;
 
@@ -28,6 +29,12 @@ public partial class EnemyBase : CharacterBody2D
 	[Export(PropertyHint.Range, "0,1,0.01")] public float HitStopSeconds { get; set; } = 0.08f;
 	[Export(PropertyHint.Range, "0,1,0.01")] public float FlashSeconds { get; set; } = 0.08f;
 	[Export(PropertyHint.Range, "0,5,0.05")] public float DespawnDelaySeconds { get; set; } = 0.4f;
+	[Export] public bool UseGravity { get; set; } = true;
+	[Export] public bool RangedAttack { get; set; } = false;
+	[Export(PropertyHint.Range, "0,2000,1")] public float RangedMinDistance { get; set; } = 200f;
+	[Export(PropertyHint.Range, "0,2000,1")] public float RangedMaxDistance { get; set; } = 350f;
+	[Export(PropertyHint.Range, "0,2000,1")] public float KiteSpeed { get; set; } = 120f;
+	[Export] public PackedScene? EnemyProjectileScene { get; set; }
 	[Export] public bool DebugCombat { get; set; }
 	[Export] public NodePath? AggroPath { get; set; }
 	[Export] public NodePath? HealthPath { get; set; }
@@ -170,7 +177,7 @@ public partial class EnemyBase : CharacterBody2D
 		}
 
 		// Gravity
-		if (!IsOnFloor())
+		if (UseGravity && !IsOnFloor())
 		{
 			Velocity += GetGravity() * step;
 		}
@@ -211,15 +218,15 @@ public partial class EnemyBase : CharacterBody2D
 				UpdateChase(target);
 				break;
 			case "Attack":
-				Velocity = new Vector2(0f, Velocity.Y);
+				Velocity = UseGravity ? new Vector2(0f, Velocity.Y) : Vector2.Zero;
 				FaceTarget(target);
 				break;
 			case "Death":
-				Velocity = new Vector2(0f, Velocity.Y);
+				Velocity = UseGravity ? new Vector2(0f, Velocity.Y) : Vector2.Zero;
 				_hitbox?.DeactivateWindow();
 				break;
 			default:
-				Velocity = new Vector2(0f, Velocity.Y);
+				Velocity = UseGravity ? new Vector2(0f, Velocity.Y) : Vector2.Zero;
 				break;
 		}
 
@@ -302,6 +309,9 @@ public partial class EnemyBase : CharacterBody2D
 	{
 		if (DebugCombat)
 			GD.Print($"[Enemy] {Name} aggro lost → Idle");
+		_hitbox?.DeactivateWindow();
+		_attackWindupRemaining = 0f;
+		_attackActiveRemaining = 0f;
 		_fsm?.TransitionNow("Idle");
 	}
 
@@ -349,9 +359,50 @@ public partial class EnemyBase : CharacterBody2D
 		}
 
 		var offset = target.GlobalPosition - GlobalPosition;
-		var horizontalDistance = Mathf.Abs(offset.X);
-
 		FaceTarget(target);
+
+		// Gravity-free enemies move in full 2D directly toward the target.
+		if (!UseGravity)
+		{
+			var dist = offset.Length();
+			if (dist <= AttackRange)
+			{
+				Velocity = Vector2.Zero;
+				if (CanStartAttack())
+					StartAttack();
+				return;
+			}
+			Velocity = offset.Normalized() * MoveSpeed;
+			return;
+		}
+
+		// Ranged enemies kite: stay in [RangedMinDistance, RangedMaxDistance] band.
+		if (RangedAttack)
+		{
+			var horizontalDist = Mathf.Abs(offset.X);
+			if (horizontalDist < RangedMinDistance)
+			{
+				// Too close — back away horizontally.
+				var awayDir = -Mathf.Sign(offset.X);
+				Velocity = new Vector2(awayDir * KiteSpeed, Velocity.Y);
+				return;
+			}
+			if (horizontalDist > RangedMaxDistance)
+			{
+				// Too far — close in.
+				var towardDir = Mathf.Sign(offset.X);
+				Velocity = new Vector2(towardDir * MoveSpeed, Velocity.Y);
+				return;
+			}
+			// Inside the band — stop moving and fire if ready.
+			Velocity = new Vector2(0f, Velocity.Y);
+			if (CanStartAttack())
+				StartAttack();
+			return;
+		}
+
+		// Default melee: close to AttackRange then swing.
+		var horizontalDistance = Mathf.Abs(offset.X);
 
 		if (horizontalDistance <= AttackRange)
 		{
@@ -393,8 +444,31 @@ public partial class EnemyBase : CharacterBody2D
 		_attackWindupRemaining = AttackWindupSeconds;
 		_attackActiveRemaining = 0f;
 		_hitbox?.DeactivateWindow();
-		// Stretch the swing animation across windup + active so the visual lands with the hitbox.
 		_animator?.Play("attack", AttackWindupSeconds + AttackActiveSeconds);
+	}
+
+	private void SpawnProjectile()
+	{
+		if (EnemyProjectileScene == null) return;
+		var root = GetTree()?.CurrentScene;
+		if (root == null) return;
+
+		var proj = EnemyProjectileScene.Instantiate<ProjectileController>();
+		proj.GlobalPosition = GlobalPosition;
+
+		// Fire horizontally toward target; fall back to current facing if no target.
+		var target = _aggro?.CurrentTarget;
+		if (target != null && GodotObject.IsInstanceValid(target))
+		{
+			var dx = target.GlobalPosition.X - GlobalPosition.X;
+			proj.Direction = new Vector2(Mathf.Sign(dx), 0f);
+		}
+		else
+		{
+			proj.Direction = _sprite != null && _sprite.FlipH ? Vector2.Left : Vector2.Right;
+		}
+
+		root.CallDeferred(Node.MethodName.AddChild, proj);
 	}
 
 	private void TickAttackTimers(float step)
@@ -410,7 +484,10 @@ public partial class EnemyBase : CharacterBody2D
 			if (_attackWindupRemaining <= 0f)
 			{
 				_attackWindupRemaining = 0f;
-				_hitbox?.ActivateWindow();
+				if (RangedAttack)
+					SpawnProjectile();
+				else
+					_hitbox?.ActivateWindow();
 				_attackActiveRemaining = AttackActiveSeconds;
 			}
 		}

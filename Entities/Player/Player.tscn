@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://b22a6fqpkdk66"]
+[gd_scene load_steps=20 format=3 uid="uid://b22a6fqpkdk66"]
 
 [ext_resource type="Script" uid="uid://e5igw64p3dkm" path="res://Entities/Player/PlayerController.cs" id="1_k2mn4"]
 [ext_resource type="Script" uid="uid://csw3twea16j82" path="res://Components/Health/HealthComponent.cs" id="2_health"]
@@ -15,6 +15,9 @@
 [ext_resource type="Texture2D" uid="uid://c0xyqdkr0q0m5" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Idle.png" id="16_warrior"]
 [ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Run.png" id="17_warrior_run"]
 [ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Black Units/Warrior/Warrior_Attack1.png" id="18_warrior_attack"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/SunshineBurstProjectile.tscn" id="19_sunshine"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/PureWhiteRayProjectile.tscn" id="20_purewhite"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/LightPillar.tscn" id="21_lightpillar"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 24)
@@ -108,6 +111,13 @@ script = ExtResource("10_channel")
 
 [node name="PathwayComponent" type="Node" parent="."]
 script = ExtResource("11_pathway")
+PathwayId = "bard"
+StartingAbilityIds = PackedStringArray("bardic_song")
+SequenceUnlockLevels = PackedInt32Array(8, 7, 7, 6, 6, 5, 5, 5)
+SequenceUnlockAbilityIds = PackedStringArray("sunshine_burst", "theurgical_purification", "dispel_fear", "truth_seal", "notarized_enhancement", "pure_white_ray", "horror_immunity", "night_vision_permanent")
 
 [node name="BardAbilityHandler" type="Node" parent="."]
 script = ExtResource("12_bard")
+SunshineBurstScene = ExtResource("19_sunshine")
+PureWhiteRayScene = ExtResource("20_purewhite")
+LightPillarScene = ExtResource("21_lightpillar")

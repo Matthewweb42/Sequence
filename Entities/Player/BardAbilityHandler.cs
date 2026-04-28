@@ -51,6 +51,12 @@ public partial class BardAbilityHandler : Node
     [Export] public PackedScene? PureWhiteRayScene { get; set; }
     [Export] public PackedScene? LightPillarScene { get; set; }
 
+    // --- Bardic Song charge-up tuning ---
+    [Export(PropertyHint.Range, "0.5,30,0.5")] public float BardicSongMaxChargeSeconds { get; set; } = 8f;
+    [Export(PropertyHint.Range, "0.1,50,0.1")] public float BardicSongSanityDrainPerSecond { get; set; } = 6f;
+    [Export] public Color BardicSongChargeTint { get; set; } = new Color(1.4f, 1.2f, 0.6f, 1f);
+    [Export] public Color BardicSongActiveTint { get; set; } = new Color(1.15f, 1.1f, 0.85f, 1f);
+
     private AbilityComponent? _ability;
     private SanityComponent? _sanity;
     private HealthComponent? _health;
@@ -67,6 +73,13 @@ public partial class BardAbilityHandler : Node
     private bool _facingRight = true;
     private float _deactivateAoENextFrame = -1f;
 
+    // Bardic Song state
+    private bool _bardCharging;
+    private float _bardChargeElapsed;
+    private float _bardActiveRemaining;
+    private Sprite2D? _playerSprite;
+    private Color _playerBaseModulate = Colors.White;
+
     public override void _Ready()
     {
         var parent = GetParent();
@@ -82,6 +95,10 @@ public partial class BardAbilityHandler : Node
             _aoEHitbox = GetNodeOrNull<HitboxComponent>(AoEHitboxPath);
         else
             _aoEHitbox = parent?.GetNodeOrNull<HitboxComponent>("AoEHitboxComponent");
+
+        _playerSprite = parent?.GetNodeOrNull<Sprite2D>("Sprite2D");
+        if (_playerSprite != null)
+            _playerBaseModulate = _playerSprite.Modulate;
 
         if (_ability != null)
             _ability.AbilityActivated += OnAbilityActivated;
@@ -113,36 +130,103 @@ public partial class BardAbilityHandler : Node
 
     public override void _Process(double delta)
     {
+        var step = (float)delta;
         TrackFacing();
-        HandleChannelInput();
+        HandleBardicSongInput(step);
         HandleInstantAbilityInput();
-        TickSunEyesTimer((float)delta);
-        TickAoEDeactivation((float)delta);
+        TickSunEyesTimer(step);
+        TickAoEDeactivation(step);
     }
 
     // -------------------------------------------------------------------------
     // Input Handling
     // -------------------------------------------------------------------------
 
-    private void HandleChannelInput()
+    /// <summary>
+    /// Bardic Song = "charge then release":
+    ///   - Hold Q: drain sanity, accumulate charge time. Player sprite tinted gold.
+    ///   - Release Q (or run out of sanity, or hit max charge): convert charge time
+    ///     into an equal duration of the bardic_song_buff effect. Player can move
+    ///     and attack normally during the buff; sprite has a softer glow tint.
+    /// </summary>
+    private void HandleBardicSongInput(float delta)
     {
-        if (_ability == null || _channel == null) return;
+        if (!IsUnlocked("bardic_song")) return;
 
-        if (Input.IsActionPressed("ability_1"))
+        var holding = Input.IsActionPressed("ability_1");
+
+        if (holding && !_bardCharging && _bardActiveRemaining <= 0f)
         {
-            if (!_channel.IsChanneling && IsUnlocked("bardic_song"))
+            _bardCharging = true;
+            _bardChargeElapsed = 0f;
+            ApplySpriteTint(BardicSongChargeTint);
+        }
+
+        if (_bardCharging)
+        {
+            // Drain sanity proportional to delta. If we can't pay, end the charge early.
+            var drain = BardicSongSanityDrainPerSecond * delta;
+            if (_sanity == null || !_sanity.TrySpend(drain))
             {
-                // Use 0 cost here — ChannelComponent drains sanity over time
-                if (_ability.TryActivate("bardic_song", 0f, 0f))
-                {
-                    _channel.TryBeginChannel("bardic_song");
-                }
+                FinishBardicCharge();
+                return;
+            }
+
+            _bardChargeElapsed += delta;
+
+            if (!holding || _bardChargeElapsed >= BardicSongMaxChargeSeconds)
+            {
+                FinishBardicCharge();
+            }
+            return;
+        }
+
+        if (_bardActiveRemaining > 0f)
+        {
+            _bardActiveRemaining -= delta;
+            if (_bardActiveRemaining <= 0f)
+            {
+                _bardActiveRemaining = 0f;
+                _status?.RemoveEffect("bardic_song_buff");
+                ApplySpriteTint(_playerBaseModulate, replaceBase: false);
             }
         }
-        else if (_channel.IsChanneling && _channel.ActiveChannelId == "bardic_song")
+    }
+
+    private void FinishBardicCharge()
+    {
+        _bardCharging = false;
+        if (_bardChargeElapsed <= 0.05f)
         {
-            _channel.EndChannel("released");
+            // Cancelled before producing meaningful charge — just clear visuals.
+            _bardChargeElapsed = 0f;
+            ApplySpriteTint(_playerBaseModulate, replaceBase: false);
+            return;
         }
+
+        var notarized = IsUnlocked("notarized_enhancement");
+        var moveBonus = notarized ? 1.225f : 1.15f;
+        var atkBonus = notarized ? 1.15f : 1.10f;
+
+        var duration = _bardChargeElapsed * _ailmentDurationMultiplier;
+        _bardActiveRemaining = duration;
+        _bardChargeElapsed = 0f;
+
+        _status?.ApplyEffect("bardic_song_buff", duration,
+            modifiers: new[]
+            {
+                new StatModifier("move_speed", moveBonus, ModifierOp.Multiplicative),
+                new StatModifier("attack_speed_multiplier", atkBonus, ModifierOp.Multiplicative),
+            },
+            tags: new[] { "buff", "bardic_song" });
+
+        ApplySpriteTint(BardicSongActiveTint);
+    }
+
+    private void ApplySpriteTint(Color tint, bool replaceBase = true)
+    {
+        if (_playerSprite == null) return;
+        _playerSprite.Modulate = replaceBase ? tint : _playerBaseModulate;
     }
 
     private void HandleInstantAbilityInput()

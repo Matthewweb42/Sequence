@@ -5,6 +5,7 @@ using Sequence.Components.Animation;
 using Sequence.Components.Health;
 using Sequence.Components.Hitbox;
 using Sequence.Components.Hurtbox;
+using Sequence.Components.Sequence;
 using Sequence.Components.Status;
 
 namespace Sequence.Entities.Player;
@@ -45,9 +46,9 @@ public partial class PlayerController : CharacterBody2D
 	private Sprite2D? _sprite;
 	private Camera2D? _camera;
 	private SpriteAnimator? _animator;
+	private SequenceComponent? _sequence;
 	private float _attackWindowRemaining;
 	private float _attackCooldownRemaining;
-	private bool _attackWasPressed;
 	private bool _jumpHeld;
 	private int _facing = 1;
 	private float _hitStopRemaining;
@@ -62,6 +63,7 @@ public partial class PlayerController : CharacterBody2D
 		_status = GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
 		_sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
 		_camera = GetNodeOrNull<Camera2D>("Camera2D");
+		_sequence = GetNodeOrNull<SequenceComponent>("SequenceComponent");
 
 		SetupAnimator();
 
@@ -104,6 +106,15 @@ public partial class PlayerController : CharacterBody2D
 	public override void _PhysicsProcess(double delta)
 	{
 		var step = (float)delta;
+
+		// Debug: F12 advances sequence (bypasses shrine + materials).
+		if (Input.IsActionJustPressed("debug_advance_sequence"))
+		{
+			if (_sequence != null && _sequence.TryAdvance())
+				GD.Print($"[Debug] Sequence advanced to {_sequence.CurrentSequence}");
+			else
+				GD.Print("[Debug] Sequence advance blocked (already at final).");
+		}
 
 		if (_attackWindowRemaining > 0f)
 		{
@@ -185,15 +196,10 @@ public partial class PlayerController : CharacterBody2D
 		Velocity = new Vector2(moveX * effectiveMoveSpeed, Velocity.Y);
 		MoveAndSlide();
 
-		// Attack
-		var attackPressed = Input.IsActionPressed("attack");
-		var attackJustPressed = attackPressed && !_attackWasPressed;
-		_attackWasPressed = attackPressed;
+		// Attack — held button auto-repeats; cooldown gate paces the swings.
+		var attackHeld = Input.IsActionPressed("attack");
 
-		if (attackJustPressed)
-			GD.Print("[Player] attack input received");
-
-		if (attackJustPressed && _attackCooldownRemaining <= 0f && _attackWindowRemaining <= 0f)
+		if (attackHeld && _attackCooldownRemaining <= 0f && _attackWindowRemaining <= 0f)
 		{
 			// Basic attack is always free; don't gate it on AbilityComponent unlocks.
 			_hitbox?.ActivateWindow();
@@ -204,11 +210,7 @@ public partial class PlayerController : CharacterBody2D
 			_animator?.Play("attack", _attackWindowRemaining);
 
 			if (DebugCombat)
-				GD.Print($"[Player] Swing facing={_facing} attackJustPressed={attackJustPressed}");
-		}
-		else if (attackJustPressed && DebugCombat)
-		{
-			GD.Print($"[Player] Attack pressed but blocked: cooldown={_attackCooldownRemaining:F2}s window={_attackWindowRemaining:F2}s");
+				GD.Print($"[Player] Swing facing={_facing}");
 		}
 
 		UpdateAnimationState(moveX);

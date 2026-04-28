@@ -1,7 +1,8 @@
-[gd_scene load_steps=16 format=3 uid="uid://cs8dfq03gviaw"]
+[gd_scene load_steps=17 format=3 uid="uid://cs8dfq03gviaw"]
 
 [ext_resource type="Script" uid="uid://bm0inq1kwl2ah" path="res://Entities/Enemies/EnemyBase.cs" id="1_u5a2n"]
 [ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="8_w2r5y"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/MushroomProjectile.tscn" id="proj_mushroom"]
 [ext_resource type="Texture2D" uid="uid://diynmq1rnsdhv" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Mushroom/Attack3.png" id="11_tex"]
 [ext_resource type="Script" uid="uid://f1piwqgygyw6" path="res://Components/Aggro/AggroComponent.cs" id="aggro_script"]
 [ext_resource type="Script" uid="uid://h3wo5if5v1le" path="res://Components/Drop/DropComponent.cs" id="drop_script"]
@@ -30,6 +31,15 @@ collision_mask = 273
 script = ExtResource("1_u5a2n")
 MaterialPickupScene = ExtResource("8_w2r5y")
 AttackSpriteSheet = ExtResource("11_tex")
+RangedAttack = true
+RangedMinDistance = 200.0
+RangedMaxDistance = 350.0
+KiteSpeed = 120.0
+AttackCooldownSeconds = 2.5
+AttackWindupSeconds = 0.3
+AttackActiveSeconds = 0.1
+EnemyProjectileScene = ExtResource("proj_mushroom")
+DebugCombat = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
