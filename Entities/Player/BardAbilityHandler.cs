@@ -73,6 +73,12 @@ public partial class BardAbilityHandler : Node
     private bool _facingRight = true;
     private float _deactivateAoENextFrame = -1f;
 
+    // Screen flash state
+    private ColorRect? _flashRect;
+    private float _flashRemaining = -1f;
+    private float _flashDuration = 0.18f;
+    private Color _flashColor = Colors.White;
+
     // Bardic Song state
     private bool _bardCharging;
     private float _bardChargeElapsed;
@@ -114,6 +120,25 @@ public partial class BardAbilityHandler : Node
 
         if (_status != null)
             _status.EffectApplied += OnStatusEffectApplied;
+
+        BuildFlashRect();
+    }
+
+    private void BuildFlashRect()
+    {
+        // Full-screen color rect used for ability flash effects. Added to the
+        // player's viewport layer so it covers the whole screen briefly.
+        _flashRect = new ColorRect();
+        _flashRect.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _flashRect.MouseFilter = Control.MouseFilterEnum.Ignore;
+        _flashRect.Color = new Color(1f, 1f, 1f, 0f);
+        _flashRect.ZIndex = 100;
+
+        // We need a CanvasLayer so it draws over the game world.
+        var layer = new CanvasLayer();
+        layer.Layer = 10;
+        layer.AddChild(_flashRect);
+        AddChild(layer);
     }
 
     public override void _ExitTree()
@@ -136,6 +161,7 @@ public partial class BardAbilityHandler : Node
         HandleInstantAbilityInput();
         TickSunEyesTimer(step);
         TickAoEDeactivation(step);
+        TickFlash(step);
     }
 
     // -------------------------------------------------------------------------
@@ -333,6 +359,9 @@ public partial class BardAbilityHandler : Node
         projectile.Direction = _facingRight ? Vector2.Right : Vector2.Left;
         GetTree()?.CurrentScene?.AddChild(projectile);
         projectile.GlobalPosition = GetParentPosition();
+
+        // Warm golden flash — solar energy release.
+        TriggerFlash(new Color(1f, 0.85f, 0.1f, 0.30f), 0.20f);
     }
 
     private void ExecuteBlindingFlash()
@@ -413,6 +442,12 @@ public partial class BardAbilityHandler : Node
                 hp.TakeDamage(99999f, this);
             }
         }
+
+        // Brilliant white holy flash.
+        TriggerFlash(new Color(1f, 1f, 0.9f, 0.45f), 0.25f);
+        // Also pulse the player sprite white for a moment.
+        ApplySpriteTint(new Color(2f, 2f, 1.8f, 1f));
+        GetTree().CreateTimer(0.12f).Timeout += () => ApplySpriteTint(_bardActiveRemaining > 0f ? BardicSongActiveTint : _playerBaseModulate, replaceBase: false);
     }
 
     private void ExecuteLightOfHoliness()
@@ -464,6 +499,22 @@ public partial class BardAbilityHandler : Node
 
         var status = nearest.GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
         status?.ApplyEffect("truth_sealed", 15f, tags: new[] { "truth_sealed", "debuff" });
+
+        // Gold flash — a seal being stamped.
+        TriggerFlash(new Color(1f, 0.75f, 0f, 0.28f), 0.18f);
+
+        // Briefly tint the sealed enemy red so it's clear it was targeted.
+        if (nearest is Node2D enemyNode)
+        {
+            var sprite = enemyNode.GetNodeOrNull<Sprite2D>("Sprite2D")
+                      ?? enemyNode.GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D") as CanvasItem;
+            if (sprite != null)
+            {
+                var orig = sprite.Modulate;
+                sprite.Modulate = new Color(1.8f, 0.3f, 0.3f, 1f);
+                GetTree().CreateTimer(0.15f).Timeout += () => { if (GodotObject.IsInstanceValid(sprite)) sprite.Modulate = orig; };
+            }
+        }
     }
 
     private void ExecuteContractBinding()
@@ -510,6 +561,11 @@ public partial class BardAbilityHandler : Node
                 new StatModifier("move_speed", 1.20f, ModifierOp.Multiplicative),
             },
             tags: new[] { "buff", "solar_oath" });
+
+        // Blazing orange-white flash for the oath activation.
+        TriggerFlash(new Color(1f, 0.5f, 0.05f, 0.40f), 0.30f);
+        ApplySpriteTint(new Color(1.6f, 1.1f, 0.4f, 1f));
+        GetTree().CreateTimer(0.25f).Timeout += () => ApplySpriteTint(_bardActiveRemaining > 0f ? BardicSongActiveTint : _playerBaseModulate, replaceBase: false);
     }
 
     private void ExecutePureWhiteRay()
@@ -520,6 +576,11 @@ public partial class BardAbilityHandler : Node
         projectile.Direction = _facingRight ? Vector2.Right : Vector2.Left;
         GetTree()?.CurrentScene?.AddChild(projectile);
         projectile.GlobalPosition = GetParentPosition();
+
+        // Intense white flash — divine light made manifest.
+        TriggerFlash(new Color(1f, 1f, 1f, 0.55f), 0.22f);
+        ApplySpriteTint(new Color(2.5f, 2.5f, 2.5f, 1f));
+        GetTree().CreateTimer(0.10f).Timeout += () => ApplySpriteTint(_bardActiveRemaining > 0f ? BardicSongActiveTint : _playerBaseModulate, replaceBase: false);
     }
 
     // -------------------------------------------------------------------------
@@ -568,9 +629,11 @@ public partial class BardAbilityHandler : Node
 
     private void TrackFacing()
     {
-        var moveX = Input.GetAxis("move_left", "move_right");
-        if (moveX > 0.1f) _facingRight = true;
-        else if (moveX < -0.1f) _facingRight = false;
+        // Read facing from the sprite's FlipH — PlayerController keeps this accurate
+        // regardless of whether input uses axis actions or raw key checks.
+        var sprite = _playerSprite ?? GetParent()?.GetNodeOrNull<Sprite2D>("Sprite2D");
+        if (sprite != null)
+            _facingRight = !sprite.FlipH;
     }
 
     private void TickSunEyesTimer(float delta)
@@ -613,6 +676,29 @@ public partial class BardAbilityHandler : Node
             }
         }
         return nearest;
+    }
+
+    private void TriggerFlash(Color color, float duration = 0.18f)
+    {
+        if (_flashRect == null) return;
+        _flashColor = color;
+        _flashDuration = duration;
+        _flashRemaining = duration;
+        _flashRect.Color = color;
+    }
+
+    private void TickFlash(float delta)
+    {
+        if (_flashRemaining < 0f || _flashRect == null) return;
+        _flashRemaining -= delta;
+        if (_flashRemaining <= 0f)
+        {
+            _flashRemaining = -1f;
+            _flashRect.Color = new Color(0f, 0f, 0f, 0f);
+            return;
+        }
+        var alpha = (_flashRemaining / _flashDuration) * _flashColor.A;
+        _flashRect.Color = new Color(_flashColor.R, _flashColor.G, _flashColor.B, alpha);
     }
 
     private Vector2 GetParentPosition()

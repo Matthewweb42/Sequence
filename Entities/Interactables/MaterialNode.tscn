@@ -11,6 +11,7 @@ collision_layer = 128
 collision_mask = 1
 script = ExtResource("1_mp")
 MaterialId = "material"
+AutoCollect = true
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_meat")

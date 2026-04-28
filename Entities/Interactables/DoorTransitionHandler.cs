@@ -23,6 +23,7 @@ public partial class DoorTransitionHandler : Area2D
 
 	/// <summary>Whether the player is currently in proximity to this door.</summary>
 	private bool _playerInProximity = false;
+	private InteractPrompt? _prompt;
 
 	// ═══════════════════════════════════════════════════════════════════════════════════
 	//  Godot Lifecycle
@@ -47,6 +48,10 @@ public partial class DoorTransitionHandler : Area2D
 		// Connect to body entry/exit signals (player is CharacterBody2D, not Area2D)
 		BodyEntered += OnBodyEntered;
 		BodyExited += OnBodyExited;
+
+		_prompt = new InteractPrompt();
+		_prompt.PulseColor = new Color(0.4f, 0.7f, 1f, 1f); // blue for doors
+		AddChild(_prompt);
 	}
 
 	public override void _ExitTree()
@@ -57,8 +62,8 @@ public partial class DoorTransitionHandler : Area2D
 
 	public override void _Input(InputEvent @event)
 	{
-		// Check if player pressed W while in proximity
-		if (_playerInProximity && @event is InputEventKey key && key.PhysicalKeycode == Key.W && key.Pressed && !key.Echo)
+		if (!_playerInProximity) return;
+		if (@event is InputEventKey key && key.PhysicalKeycode == Key.W && key.Pressed && !key.Echo)
 		{
 			AttemptTransition();
 			GetViewport().SetInputAsHandled();
@@ -83,6 +88,7 @@ public partial class DoorTransitionHandler : Area2D
 		if (body == runManager.Player)
 		{
 			_playerInProximity = true;
+			_prompt?.Show();
 			GD.Print($"[DoorTransitionHandler] Player in proximity to door {Direction}");
 		}
 	}
@@ -101,6 +107,7 @@ public partial class DoorTransitionHandler : Area2D
 		if (body == runManager.Player)
 		{
 			_playerInProximity = false;
+			_prompt?.Hide();
 			GD.Print($"[DoorTransitionHandler] Player left door {Direction}");
 		}
 	}

@@ -23,6 +23,7 @@ public partial class SequenceShrine : Area2D
     private Node2D? _currentUser;
     private bool _interactWasPressed;
     private bool _isConsumed;
+    private InteractPrompt? _prompt;
 
     public override void _Ready()
     {
@@ -30,6 +31,11 @@ public partial class SequenceShrine : Area2D
         BodyExited += OnBodyExited;
         AreaEntered += OnAreaEntered;
         AreaExited += OnAreaExited;
+
+        _prompt = new InteractPrompt();
+        _prompt.PulseColor = new Color(0.9f, 0.75f, 0.1f, 1f); // gold for shrine
+        _prompt.OffsetY = -60f;
+        AddChild(_prompt);
     }
 
     public override void _Process(double delta)
@@ -45,7 +51,7 @@ public partial class SequenceShrine : Area2D
             return;
         }
 
-        var interactPressed = Input.IsActionPressed("interact") || Input.IsKeyPressed(Key.E);
+        var interactPressed = Input.IsActionPressed("interact") || Input.IsKeyPressed(Key.W);
         var interactJustPressed = interactPressed && !_interactWasPressed;
         _interactWasPressed = interactPressed;
 
@@ -81,6 +87,7 @@ public partial class SequenceShrine : Area2D
         if (SingleUse)
         {
             _isConsumed = true;
+            _prompt?.Hide();
             Monitoring = false;
             Monitorable = false;
         }
@@ -129,6 +136,7 @@ public partial class SequenceShrine : Area2D
         if (_currentUser == null)
         {
             _currentUser = body;
+            if (!_isConsumed) _prompt?.Show();
         }
     }
 
@@ -137,19 +145,18 @@ public partial class SequenceShrine : Area2D
         if (_currentUser == body)
         {
             _currentUser = null;
+            _prompt?.Hide();
         }
     }
 
     private void OnAreaEntered(Area2D area)
     {
-        if (_currentUser != null)
-        {
-            return;
-        }
+        if (_currentUser != null) return;
 
         if (area.GetParent() is Node2D owner)
         {
             _currentUser = owner;
+            if (!_isConsumed) _prompt?.Show();
         }
     }
 
@@ -158,6 +165,7 @@ public partial class SequenceShrine : Area2D
         if (area.GetParent() is Node2D owner && _currentUser == owner)
         {
             _currentUser = null;
+            _prompt?.Hide();
         }
     }
 

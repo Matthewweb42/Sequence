@@ -43,30 +43,49 @@ text = "[b][font_size=24]Controls[/font_size][/b]
 • Move Left / Right — [code]A[/code] / [code]D[/code]
 • Jump — [code]Space[/code]
 • Attack — [code]Left Mouse Button[/code]
-• Interact / Pick Up — [code]E[/code]
-• Abilities 1–9 — [code]Q[/code], [code]R[/code], [code]T[/code], [code]G[/code], [code]F[/code], [code]V[/code], [code]Z[/code], [code]X[/code], [code]C[/code]
+• Interact / Use / Go through door — [code]W[/code]
+• Abilities — [code]Q[/code], [code]T[/code], [code]F[/code], [code]X[/code], [code]Z[/code]
+
+
+[b][font_size=24]Abilities[/font_size][/b]
+You play as a [b]Bard[/b]. New abilities unlock each time you advance your Sequence. Hover over the ability slots in the bottom-left corner to see what each one does.
+
+[b]Q — Bardic Song[/b] (unlocked at start)
+Hold Q to charge a musical aura; release to convert charge time into a movement and attack speed buff.
+
+[b]T — Sunshine Burst[/b] (unlocked at Sequence 8)
+Fire a radiant solar projectile in the direction you're facing. Also activates a temporary Sun Eyes light aura.
+
+[b]F — Theurgical Purification[/b] (unlocked at Sequence 7)
+Cleanse all debuffs from yourself and deal holy damage in a ring around you. Undead enemies below 30% HP are instantly destroyed.
+
+[b]X — Truth Seal[/b] (unlocked at Sequence 6)
+Brand the nearest enemy, stunning them for 15 seconds.
+
+[b]Z — Pure White Ray[/b] (unlocked at Sequence 5)
+Channel divine light into a blazing beam that tears through enemies.
 
 
 [b][font_size=24]Advancing[/font_size][/b]
 You begin at [b]Sequence 9[/b]. To progress, you must drop your Sequence number one tier at a time, all the way down to [b]Sequence 5[/b].
 
-At the end of each branch you'll find a [b]Sequence Shrine[/b]. Stand near it and press [code]E[/code] to advance. Each shrine requires:
-• [b]2 Materials[/b] — found in Material rooms scattered through the world.
-• [b]3 Enemy Drops[/b] — the green pickups left behind by defeated enemies. Walk over and press [code]E[/code] to collect them.
+At the end of each branch you'll find a [b]Sequence Shrine[/b] — a golden glowing interactable. Stand near it and press [code]W[/code] to advance. Each shrine requires:
+• [b]2 Materials[/b] — found in Material rooms scattered through the world. Walk into them to collect.
+• [b]3 Enemy Drops[/b] — the green pickups left behind by defeated enemies. Walk over them to collect.
 
 If you don't have enough, the shrine won't activate. Clear more rooms and come back.
 
 
 [b][font_size=24]Sequence Doors[/font_size][/b]
-Branches are walled off by [b]Sequence Doors[/b], each labeled with the Sequence number required to pass through it. A door marked \"Seq 7\" stays locked until you advance to Sequence 7 or lower. Once you advance at a shrine, every door you've earned access to opens automatically.
+Branches are walled off by [b]Sequence Doors[/b], each labeled with the Sequence number required to pass through it. A door marked \"Seq 7\" stays locked until you advance to Sequence 7 or lower. Walk up to a door and press [code]W[/code] to pass through. Once you advance at a shrine, every door you've earned access to opens automatically.
 
 
 [b][font_size=24]Healing[/font_size][/b]
-Some rooms contain a [b]Heal[/b] interactable. Press [code]E[/code] to fully restore your HP. Each heal can only be used once, so save them for when you really need them.
+Some rooms contain a [b]Heal[/b] interactable marked with a green glow. Stand near it and press [code]W[/code] to fully restore your HP. Each heal can only be used once, so save them for when you really need them.
 
 
 [b][font_size=24]The Goal[/font_size][/b]
-The Sequence 5 branch ends in the [b]Boss Room[/b]. Defeat the three-phase boss to win the run.
+Advance through all five Sequences to reach the final room and trigger victory.
 
 If you die at any point, the run ends. Good luck."
 

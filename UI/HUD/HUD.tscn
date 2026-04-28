@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://UI/HUD/HUDController.cs" id="1_v6k9n"]
 [ext_resource type="Script" path="res://UI/HUD/MiniMap.cs" id="2_minimap"]
+[ext_resource type="Script" path="res://UI/HUD/AbilityBarController.cs" id="3_abilitybar"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_v6k9n")
@@ -31,6 +32,9 @@ text = "enemy_drop: 0"
 
 [node name="RunStatusLabel" type="Label" parent="DebugPanel/VBox"]
 text = "Run: Active"
+
+[node name="AbilityBar" type="Control" parent="."]
+script = ExtResource("3_abilitybar")
 
 [node name="MiniMap" type="Control" parent="."]
 script = ExtResource("2_minimap")
