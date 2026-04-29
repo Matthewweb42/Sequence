@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://UI/HUD/HUDController.cs" id="1_v6k9n"]
 [ext_resource type="Script" path="res://UI/HUD/MiniMap.cs" id="2_minimap"]
 [ext_resource type="Script" path="res://UI/HUD/AbilityBarController.cs" id="3_abilitybar"]
+[ext_resource type="Script" path="res://UI/HUD/BossHealthBar.cs" id="4_bossbar"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_v6k9n")
@@ -35,6 +36,9 @@ text = "Run: Active"
 
 [node name="AbilityBar" type="Control" parent="."]
 script = ExtResource("3_abilitybar")
+
+[node name="BossHealthBar" type="Control" parent="."]
+script = ExtResource("4_bossbar")
 
 [node name="MiniMap" type="Control" parent="."]
 script = ExtResource("2_minimap")

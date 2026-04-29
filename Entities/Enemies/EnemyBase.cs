@@ -54,16 +54,20 @@ public partial class EnemyBase : CharacterBody2D
 	private DropComponent? _drop;
 	private StateMachineComponent? _fsm;
 	private StatusEffectComponent? _status;
-	private Sprite2D? _sprite;
+	protected Sprite2D? _sprite;
 	private SpriteAnimator? _animator;
 	private float _attackCooldownRemaining;
 	private float _attackWindupRemaining;
 	private float _attackActiveRemaining;
 	private float _hitStopRemaining;
-	private float _flashRemaining;
+	protected float _flashRemaining;
 	private float _debugTimer;
 	private float _jumpCooldownRemaining;
-	private Color _baseModulate = Colors.White;
+	protected Color _baseModulate = Colors.White;
+	private bool _truthSealTinted;
+
+	// Expose aggro target for subclasses (e.g. boss spread shots).
+	protected Node2D? AggroTarget => _aggro?.CurrentTarget;
 
 	public override void _Ready()
 	{
@@ -117,6 +121,7 @@ public partial class EnemyBase : CharacterBody2D
 
 		if (_status != null)
 		{
+			_status.EffectApplied += OnStatusEffectApplied;
 			_status.EffectRemoved += OnStatusEffectRemoved;
 		}
 	}
@@ -146,6 +151,7 @@ public partial class EnemyBase : CharacterBody2D
 
 		if (_status != null)
 		{
+			_status.EffectApplied -= OnStatusEffectApplied;
 			_status.EffectRemoved -= OnStatusEffectRemoved;
 		}
 	}
@@ -281,7 +287,8 @@ public partial class EnemyBase : CharacterBody2D
 		if (_flashRemaining <= 0f)
 		{
 			_flashRemaining = 0f;
-			_sprite.Modulate = _baseModulate;
+			// Restore the seal tint if still active, otherwise restore base color.
+			_sprite.Modulate = _truthSealTinted ? new Color(0.6f, 0.3f, 1.2f, 1f) : _baseModulate;
 		}
 	}
 
@@ -340,12 +347,28 @@ public partial class EnemyBase : CharacterBody2D
 		SpawnMaterialPickup(worldPosition);
 	}
 
+	private void OnStatusEffectApplied(string effectId)
+	{
+		if (effectId == "truth_sealed" && _sprite != null && !_truthSealTinted)
+		{
+			_truthSealTinted = true;
+			// Gold-purple tint while sealed — clearly different from the red hit-flash.
+			_sprite.Modulate = new Color(0.6f, 0.3f, 1.2f, 1f);
+		}
+	}
+
 	private void OnStatusEffectRemoved(string effectId)
 	{
 		// Contract broken: deal holy breach damage
 		if (effectId == "contract_bound" && _health != null && !_health.IsDead)
 		{
 			_health.TakeDamage(20f, null);
+		}
+
+		if (effectId == "truth_sealed" && _sprite != null && _truthSealTinted)
+		{
+			_truthSealTinted = false;
+			_sprite.Modulate = _baseModulate;
 		}
 	}
 
@@ -471,6 +494,11 @@ public partial class EnemyBase : CharacterBody2D
 		root.CallDeferred(Node.MethodName.AddChild, proj);
 	}
 
+	// Override in subclasses to add extra logic when the attack windup resolves (e.g. fire projectiles).
+	protected virtual void OnAttackLanded() { }
+	// Override in subclasses to react when the attack active window expires.
+	protected virtual void OnAttackCycleEnded() { }
+
 	private void TickAttackTimers(float step)
 	{
 		if (_attackCooldownRemaining > 0f)
@@ -489,6 +517,7 @@ public partial class EnemyBase : CharacterBody2D
 				else
 					_hitbox?.ActivateWindow();
 				_attackActiveRemaining = AttackActiveSeconds;
+				OnAttackLanded();
 			}
 		}
 
@@ -500,6 +529,7 @@ public partial class EnemyBase : CharacterBody2D
 				_attackActiveRemaining = 0f;
 				_hitbox?.DeactivateWindow();
 				_animator?.Stop();
+				OnAttackCycleEnded();
 				if (_health == null || !_health.IsDead)
 				{
 					if (_aggro != null && _aggro.HasTarget)

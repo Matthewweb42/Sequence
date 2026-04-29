@@ -550,7 +550,9 @@ public partial class RoomInstance : Node2D
 				continue;
 			}
 
-			var scenePath = enemyScenePaths[i % enemyScenePaths.Length];
+			var scenePath = Archetype == RoomArchetype.BossRoom
+				? "res://Entities/Enemies/Boss/SequenceWarden.tscn"
+				: enemyScenePaths[i % enemyScenePaths.Length];
 			var enemyScene = GD.Load<PackedScene>(scenePath);
 			if (enemyScene == null)
 			{

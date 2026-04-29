@@ -53,6 +53,7 @@ public partial class PlayerController : CharacterBody2D
 	private int _facing = 1;
 	private float _hitStopRemaining;
 	private float _shakeRemaining;
+	private bool _f11Pressed;
 
 	public override void _Ready()
 	{
@@ -115,6 +116,26 @@ public partial class PlayerController : CharacterBody2D
 			else
 				GD.Print("[Debug] Sequence advance blocked (already at final).");
 		}
+
+		// Debug: F11 teleports directly to the boss room.
+		var f11Down = Input.IsKeyPressed(Key.F11);
+		if (f11Down && !_f11Pressed)
+		{
+			var graph = World.RoomGraph.Instance;
+			if (graph != null)
+			{
+				foreach (var room in graph.AllRooms)
+				{
+					if (room.Archetype == World.RoomArchetype.BossRoom)
+					{
+						GD.Print($"[Debug] Teleporting to BossRoom {room.RoomId}");
+						RunManager.Instance?.TransitionToRoom(room.RoomId);
+						break;
+					}
+				}
+			}
+		}
+		_f11Pressed = f11Down;
 
 		if (_attackWindowRemaining > 0f)
 		{

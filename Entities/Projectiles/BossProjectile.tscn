@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Entities/Projectiles/EnemyProjectile.cs" id="1_bossProj"]
+[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Monster_Creatures_Fantasy(Version 1.3)/Mushroom/Projectile_sprite.png" id="2_sporeTex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_projectile"]
+radius = 10.0
+
+[node name="BossProjectile" type="Area2D"]
+collision_layer = 8
+collision_mask = 128
+monitorable = false
+script = ExtResource("1_bossProj")
+Speed = 280.0
+Damage = 18.0
+MaxRange = 700.0
+Team = 2
+ProjectileSheet = ExtResource("2_sporeTex")
+FrameWidth = 50
+FrameHeight = 50
+FrameCount = 8
+AnimFps = 14.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_projectile")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.5, 0.2, 1.0, 1.0)
+region_enabled = true
+region_rect = Rect2(0, 0, 50, 50)
+texture = ExtResource("2_sporeTex")

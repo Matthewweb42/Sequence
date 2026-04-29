@@ -498,7 +498,8 @@ public partial class BardAbilityHandler : Node
         if (nearest == null) return;
 
         var status = nearest.GetNodeOrNull<StatusEffectComponent>("StatusEffectComponent");
-        status?.ApplyEffect("truth_sealed", 15f, tags: new[] { "truth_sealed", "debuff" });
+        // "contract_bound" is the tag EnemyBase checks to freeze movement — truth_sealed is the display name.
+        status?.ApplyEffect("truth_sealed", 15f, tags: new[] { "truth_sealed", "contract_bound", "debuff" });
 
         // Gold flash — a seal being stamped.
         TriggerFlash(new Color(1f, 0.75f, 0f, 0.28f), 0.18f);

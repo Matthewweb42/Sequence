@@ -42,8 +42,9 @@ theme_override_font_sizes/bold_font_size = 22
 text = "[b][font_size=24]Controls[/font_size][/b]
 • Move Left / Right — [code]A[/code] / [code]D[/code]
 • Jump — [code]Space[/code]
-• Attack — [code]Left Mouse Button[/code]
-• Interact / Use / Go through door — [code]W[/code]
+• Attack — [code]Left Mouse Button[/code] (hold to auto-swing)
+• Interact / Use shrine or heal — [code]W[/code]
+• Go through a door — walk into it and press [code]W[/code]
 • Abilities — [code]Q[/code], [code]T[/code], [code]F[/code], [code]X[/code], [code]Z[/code]
 
 
@@ -57,35 +58,45 @@ Hold Q to charge a musical aura; release to convert charge time into a movement 
 Fire a radiant solar projectile in the direction you're facing. Also activates a temporary Sun Eyes light aura.
 
 [b]F — Theurgical Purification[/b] (unlocked at Sequence 7)
-Cleanse all debuffs from yourself and deal holy damage in a ring around you. Undead enemies below 30% HP are instantly destroyed.
+Cleanse all debuffs from yourself and deal holy damage in a ring around you. Undead enemies below 30% HP are instantly destroyed. Also permanently increases your max HP.
 
 [b]X — Truth Seal[/b] (unlocked at Sequence 6)
-Brand the nearest enemy, stunning them for 15 seconds.
+Brand the nearest enemy, stunning them in place for 15 seconds. A branded enemy that breaks the seal takes bonus holy damage.
 
 [b]Z — Pure White Ray[/b] (unlocked at Sequence 5)
-Channel divine light into a blazing beam that tears through enemies.
+Launch a blazing divine beam that tears through enemies. Grants permanent immunity to fear and keeps Sun Eyes always active.
 
 
-[b][font_size=24]Advancing[/font_size][/b]
-You begin at [b]Sequence 9[/b]. To progress, you must drop your Sequence number one tier at a time, all the way down to [b]Sequence 5[/b].
+[b][font_size=24]Advancing Your Sequence[/font_size][/b]
+You begin at [b]Sequence 9[/b]. Advance down through each tier to reach [b]Sequence 5[/b].
 
 At the end of each branch you'll find a [b]Sequence Shrine[/b] — a golden glowing interactable. Stand near it and press [code]W[/code] to advance. Each shrine requires:
-• [b]2 Materials[/b] — found in Material rooms scattered through the world. Walk into them to collect.
-• [b]3 Enemy Drops[/b] — the green pickups left behind by defeated enemies. Walk over them to collect.
+• [b]2 Materials[/b] — found in Material rooms. Walk over them to collect.
+• [b]3 Enemy Drops[/b] — green pickups left by defeated enemies. Walk over them to collect.
 
-If you don't have enough, the shrine won't activate. Clear more rooms and come back.
+If you don't have enough, the shrine won't activate — clear more rooms and come back.
 
 
 [b][font_size=24]Sequence Doors[/font_size][/b]
-Branches are walled off by [b]Sequence Doors[/b], each labeled with the Sequence number required to pass through it. A door marked \"Seq 7\" stays locked until you advance to Sequence 7 or lower. Walk up to a door and press [code]W[/code] to pass through. Once you advance at a shrine, every door you've earned access to opens automatically.
+Branches are gated by [b]Sequence Doors[/b] labeled with the Sequence required to pass. A door marked \"Seq 7\" stays locked until you reach Sequence 7 or lower. Walk up to a door and press [code]W[/code] to pass through.
 
 
 [b][font_size=24]Healing[/font_size][/b]
-Some rooms contain a [b]Heal[/b] interactable marked with a green glow. Stand near it and press [code]W[/code] to fully restore your HP. Each heal can only be used once, so save them for when you really need them.
+Some rooms contain a [b]Heal[/b] interactable marked with a green glow. Stand near it and press [code]W[/code] to fully restore your HP. Each heal can only be used once.
+
+
+[b][font_size=24]The Boss[/font_size][/b]
+Once you reach [b]Sequence 5[/b], a path opens to the [b]Boss Room[/b]. There you'll face [b]The Sequence Warden[/b] — a corrupted knight with three escalating phases:
+
+• [b]Phase I[/b] — aggressive melee, chases you down and swings hard.
+• [b]Phase II[/b] (below 66% HP) — speeds up and fires a dark orb each attack. Screen flashes orange on transition.
+• [b]Phase III[/b] (below 33% HP) — faster still, fires a 3-way spread of orbs every swing. Screen flashes red.
+
+Each phase transition grants the boss a brief window of invulnerability — back off until it fades. Defeat the Warden to win the run.
 
 
 [b][font_size=24]The Goal[/font_size][/b]
-Advance through all five Sequences to reach the final room and trigger victory.
+Advance from Sequence 9 to 5, unlock all five abilities, and slay The Sequence Warden.
 
 If you die at any point, the run ends. Good luck."
 

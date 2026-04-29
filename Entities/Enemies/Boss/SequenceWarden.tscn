@@ -1,0 +1,106 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://Entities/Enemies/Boss/SequenceWarden.cs" id="1_warden"]
+[ext_resource type="Script" path="res://Entities/Enemies/Boss/BossPhaseComponent.cs" id="2_phase"]
+[ext_resource type="PackedScene" path="res://Entities/Interactables/MaterialPickup.tscn" id="3_pickup"]
+[ext_resource type="Texture2D" path="res://Assets/Tiny Swords/Tiny Swords/Units/Purple Units/Warrior/Warrior_Attack1.png" id="4_tex"]
+[ext_resource type="Script" path="res://Components/Aggro/AggroComponent.cs" id="5_aggro"]
+[ext_resource type="Script" path="res://Components/Drop/DropComponent.cs" id="6_drop"]
+[ext_resource type="Script" path="res://Components/StateMachine/StateMachineComponent.cs" id="7_fsm"]
+[ext_resource type="Script" path="res://Components/Health/HealthComponent.cs" id="8_health"]
+[ext_resource type="Script" path="res://Components/Hitbox/HitboxComponent.cs" id="9_hitbox"]
+[ext_resource type="Script" path="res://Components/Hurtbox/HurtboxComponent.cs" id="10_hurtbox"]
+[ext_resource type="Script" path="res://Components/Status/StatusEffectComponent.cs" id="11_status"]
+[ext_resource type="Script" path="res://Components/Combat/EntityTagComponent.cs" id="12_tag"]
+[ext_resource type="PackedScene" path="res://Entities/Projectiles/BossProjectile.tscn" id="13_proj"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(28, 38)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(26, 36)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
+radius = 22.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_aggro"]
+radius = 600.0
+
+[node name="SequenceWarden" type="CharacterBody2D"]
+collision_layer = 17
+collision_mask = 273
+script = ExtResource("1_warden")
+MoveSpeed = 90.0
+JumpVelocity = 550.0
+AttackRange = 42.0
+HitboxForwardOffset = 28.0
+AttackCooldownSeconds = 1.8
+AttackWindupSeconds = 0.25
+AttackActiveSeconds = 0.20
+HitKnockbackSpeed = 300.0
+FlashSeconds = 0.10
+AttackSpriteSheet = ExtResource("4_tex")
+SpriteFrameSize = 192
+AttackFrameCount = 4
+MaterialPickupScene = ExtResource("3_pickup")
+DebugCombat = true
+BossProjectileScene = ExtResource("13_proj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(2.5, 2.5)
+texture = ExtResource("4_tex")
+region_enabled = true
+region_rect = Rect2(0, 0, 192, 192)
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("8_health")
+MaxHp = 350.0
+
+[node name="HurtboxComponent" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("10_hurtbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
+shape = SubResource("RectangleShape2D_hurtbox")
+
+[node name="HitboxComponent" type="Area2D" parent="."]
+collision_layer = 8
+collision_mask = 128
+monitoring = false
+monitorable = false
+script = ExtResource("9_hitbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxComponent"]
+shape = SubResource("CircleShape2D_hitbox")
+
+[node name="StateMachineComponent" type="Node" parent="."]
+script = ExtResource("7_fsm")
+
+[node name="AggroComponent" type="Area2D" parent="."]
+collision_layer = 64
+collision_mask = 16
+script = ExtResource("5_aggro")
+RequireLineOfSight = false
+DebugAggro = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AggroComponent"]
+shape = SubResource("CircleShape2D_aggro")
+
+[node name="DropComponent" type="Node" parent="."]
+script = ExtResource("6_drop")
+
+[node name="StatusEffectComponent" type="Node" parent="."]
+script = ExtResource("11_status")
+
+[node name="EntityTagComponent" type="Node" parent="."]
+script = ExtResource("12_tag")
+Tags = PackedStringArray("corrupted", "undead")
+
+[node name="BossPhaseComponent" type="Node" parent="."]
+script = ExtResource("2_phase")
