@@ -101,6 +101,7 @@ public partial class AbilityBarController : Control
         public required PanelContainer Panel;
         public required Label KeyLabel;
         public required ColorRect CooldownOverlay;
+        public required Label CooldownLabel;
         public required string AbilityId;
         public required string Action;
         public float CooldownTotal;
@@ -149,12 +150,24 @@ public partial class AbilityBarController : Control
             overlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             overlay.MouseFilter = Control.MouseFilterEnum.Ignore;
 
-            // Stack label + overlay inside the panel via a plain Control container.
+            // Cooldown seconds label — shown centered when on cooldown.
+            var cdLabel = new Label();
+            cdLabel.Text = "";
+            cdLabel.HorizontalAlignment = HorizontalAlignment.Center;
+            cdLabel.VerticalAlignment = VerticalAlignment.Center;
+            cdLabel.AddThemeColorOverride("font_color", new Color(1f, 1f, 1f, 0.9f));
+            cdLabel.AddThemeFontSizeOverride("font_size", 14);
+            cdLabel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            cdLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
+            cdLabel.Visible = false;
+
+            // Stack label + overlay + cdLabel inside the panel via a plain Control container.
             var stack = new Control();
             stack.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             stack.MouseFilter = Control.MouseFilterEnum.Ignore;
             stack.AddChild(label);
             stack.AddChild(overlay);
+            stack.AddChild(cdLabel);
 
             panel.AddChild(stack);
             hbox.AddChild(panel);
@@ -166,12 +179,13 @@ public partial class AbilityBarController : Control
 
             _slots.Add(new SlotWidgets
             {
-                Panel          = panel,
-                KeyLabel       = label,
+                Panel           = panel,
+                KeyLabel        = label,
                 CooldownOverlay = overlay,
-                AbilityId      = abilityId,
-                Action         = action,
-                CooldownTotal  = 0f,
+                CooldownLabel   = cdLabel,
+                AbilityId       = abilityId,
+                Action          = action,
+                CooldownTotal   = 0f,
             });
         }
 
@@ -352,6 +366,21 @@ public partial class AbilityBarController : Control
             else
             {
                 slot.CooldownOverlay.Color = new Color(0f, 0f, 0f, 0f);
+            }
+
+            // Cooldown seconds label.
+            if (onCooldown && unlocked)
+            {
+                slot.CooldownLabel.Visible = true;
+                slot.KeyLabel.Visible = false;
+                slot.CooldownLabel.Text = remaining >= 10f
+                    ? Mathf.CeilToInt(remaining).ToString()
+                    : remaining.ToString("F1");
+            }
+            else
+            {
+                slot.CooldownLabel.Visible = false;
+                slot.KeyLabel.Visible = true;
             }
 
             // Dim the key label text when locked.

@@ -45,6 +45,9 @@ public partial class RoomInstance : Node2D
 	/// <summary>Current number of alive enemies in this room.</summary>
 	private int _aliveEnemyCount = 0;
 
+	/// <summary>Enemies spawned by this room — used to match death events back to this room.</summary>
+	private readonly HashSet<Node> _spawnedEnemies = new();
+
 	/// <summary>
 	/// Maps cardinal directions to their connection point markers.
 	/// Used for room transitions (player moves North/South/East/West to adjacent rooms).
@@ -395,29 +398,13 @@ public partial class RoomInstance : Node2D
 	/// </summary>
 	private void OnEnemyDied(Node entity, Node? source)
 	{
-		// Simple heuristic: if the entity is not the player and it's in this room's tree
-		if (entity == null || entity is CharacterBody2D)
-		{
-			// Check if it's not the player
-			var runManager = RunManager.Instance;
-			if (runManager?.Player == entity)
-			{
-				// This was the player dying, not an enemy
-				return;
-			}
+		if (entity == null) return;
+		if (!_spawnedEnemies.Remove(entity)) return;
 
-			// Check if the entity is a descendant of this room
-			if (entity.IsAncestorOf(this) || this.IsAncestorOf(entity))
-			{
-				_aliveEnemyCount = Mathf.Max(0, _aliveEnemyCount - 1);
+		_aliveEnemyCount = Mathf.Max(0, _aliveEnemyCount - 1);
 
-				// If all enemies are dead, mark the room as cleared
-				if (_aliveEnemyCount <= 0 && !IsCleared)
-				{
-					MarkRoomAsCleared();
-				}
-			}
-		}
+		if (_aliveEnemyCount <= 0 && !IsCleared)
+			MarkRoomAsCleared();
 	}
 
 	/// <summary>
@@ -583,6 +570,7 @@ public partial class RoomInstance : Node2D
 			enemyContainer.AddChild(enemy);
 			enemy.GlobalPosition = ResolveSpawnPosition(enemy, spawnPosition);
 
+			_spawnedEnemies.Add(enemy);
 			_aliveEnemyCount++;
 
 			GD.Print($"[RoomInstance] Spawned enemy at {enemy.GlobalPosition}");

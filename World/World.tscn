@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://World/RoomGraph.tscn" id="1_rgrph"]
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="2_3d6ty"]
 [ext_resource type="PackedScene" path="res://UI/HUD/HUD.tscn" id="5_s3w8q"]
 [ext_resource type="Script" path="res://World/WorldController.cs" id="6_wctrl"]
 [ext_resource type="PackedScene" path="res://UI/Menus/VictoryScreen.tscn" id="7_vctry"]
+[ext_resource type="PackedScene" path="res://UI/Menus/DeathScreen.tscn" id="8_death"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("6_wctrl")
@@ -21,3 +22,5 @@ position = Vector2(0, 0)
 [node name="HUD" parent="." instance=ExtResource("5_s3w8q")]
 
 [node name="VictoryScreen" parent="." instance=ExtResource("7_vctry")]
+
+[node name="DeathScreen" parent="." instance=ExtResource("8_death")]

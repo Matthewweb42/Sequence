@@ -1,10 +1,10 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://UI/Menus/VictoryScreenController.cs" id="1_vctry"]
+[ext_resource type="Script" path="res://UI/Menus/DeathScreenController.cs" id="1_death"]
 
-[node name="VictoryScreen" type="CanvasLayer"]
+[node name="DeathScreen" type="CanvasLayer"]
 layer = 10
-script = ExtResource("1_vctry")
+script = ExtResource("1_death")
 
 [node name="FadeRect" type="ColorRect" parent="."]
 anchor_right = 1.0
@@ -30,19 +30,19 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Content/CenterContainer"]
-theme_override_constants/separation = 24
+theme_override_constants/separation = 16
 
 [node name="TitleLabel" type="Label" parent="Content/CenterContainer/VBoxContainer"]
-text = "The Warden Has Fallen."
+text = "You Died"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 52
-theme_override_colors/font_color = Color(1.0, 0.88, 0.25, 1)
+theme_override_font_sizes/font_size = 64
+theme_override_colors/font_color = Color(0.85, 0.15, 0.15, 1)
 
 [node name="SubtitleLabel" type="Label" parent="Content/CenterContainer/VBoxContainer"]
-text = "You have won the game."
+text = "The Sequence Warden endures."
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
-theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 1)
+theme_override_colors/font_color = Color(0.7, 0.6, 0.6, 1)
 
 [node name="Spacer" type="Control" parent="Content/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 16)

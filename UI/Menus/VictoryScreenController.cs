@@ -112,18 +112,23 @@ public partial class VictoryScreenController : CanvasLayer
 	{
 		var tween = CreateTween();
 
+		// Flash through gold then settle to a dark background before showing content.
 		if (_fadeRect != null)
 		{
-			tween.TweenProperty(_fadeRect, "color:a", 1.0f, FadeDurationSeconds)
+			tween.TweenProperty(_fadeRect, "color", new Color(0.7f, 0.55f, 0.05f, 1f), FadeDurationSeconds * 0.5f)
 				.SetTrans(Tween.TransitionType.Sine)
-				.SetEase(Tween.EaseType.InOut);
+				.SetEase(Tween.EaseType.In);
+			tween.TweenProperty(_fadeRect, "color", new Color(0.04f, 0.04f, 0.06f, 1f), FadeDurationSeconds * 0.5f)
+				.SetTrans(Tween.TransitionType.Sine)
+				.SetEase(Tween.EaseType.Out);
 		}
 
 		tween.TweenCallback(Callable.From(ShowContent));
 
 		if (_content != null)
 		{
-			tween.TweenProperty(_content, "modulate:a", 1.0f, ContentFadeDurationSeconds);
+			tween.TweenProperty(_content, "modulate:a", 1.0f, ContentFadeDurationSeconds)
+				.SetTrans(Tween.TransitionType.Sine);
 		}
 	}
 
